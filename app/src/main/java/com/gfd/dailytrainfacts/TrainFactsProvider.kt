@@ -3,7 +3,7 @@ package com.gfd.dailytrainfacts
 import java.util.Calendar
 
 object TrainFactsProvider {
-    private val facts = listOf(
+    internal val facts = listOf(
         "The first steam locomotive was built by Richard Trevithick in 1804.",
         "The fastest train in the world is the Shanghai Maglev, reaching 267 mph.",
         "The Trans-Siberian Railway is the longest railway line in the world.",
@@ -37,7 +37,7 @@ object TrainFactsProvider {
         "The Nottingham Express Transit (NET) is a light rail system serving Nottingham.",
         "Paddington Station was the London terminus for Brunel's Great Western Railway.",
         "The 'Rocket' was an early steam locomotive built by Robert Stephenson.",
-        "The Australian Trans-Australian Railway has the world's longest straight stretch of track.",
+        "The Trans-Australian Railway has the world's longest straight stretch of track.",
         "The Grand Central Terminal in New York has 44 platforms.",
         "The first dining car was introduced by the Pullman Palace Car Company.",
         "The 'Iron Horse' was a common nickname for early steam locomotives.",
@@ -45,7 +45,7 @@ object TrainFactsProvider {
         "The first electric tramway opened in Berlin in 1881.",
         "St. Pancras Station's Barlow shed was the largest single-span structure in the world in 1868.",
         "The Glacier Express in Switzerland is known as the 'slowest express train'.",
-        "The first railway post office ran in the UK in 1838.",
+        "The first railway postal service ran in the UK in 1838.",
         "The Ghan is a famous passenger train that crosses Australia from north to south.",
         "The first sleeping car was designed by George Pullman.",
         "The world's shortest railway is the Angels Flight in Los Angeles.",
@@ -204,7 +204,6 @@ object TrainFactsProvider {
         "The 'Volk's Electric Railway' in Brighton is the oldest electric railway in the world.",
         "The first railway in Japan was the Shimbashi-Yokohama line, opened in 1872.",
         "The 'Hythe Pier Railway' is the oldest continuously operating pier railway.",
-        "The first railway in Russia was the Tsarskoye Selo Railway, opened in 1837.",
         "The 'Lynton \u0026 Lynmouth Cliff Railway' is water-powered.",
         "The first railway in South Africa was the Durban-Point line, opened in 1860.",
         "The 'Babbacombe Cliff Railway' in Devon is another famous funicular.",
@@ -270,7 +269,6 @@ object TrainFactsProvider {
         "The 'Furness Railway' served the industrial areas of Cumbria.",
         "The first railway in Eritrea was the Massawa-Asmara line, opened in 1911.",
         "The 'Maryport \u0026 Carlisle Railway' was a small but profitable line.",
-        "The first railway in Ethiopia was the Djibouti-Addis Ababa line, opened in 1917.",
         "The 'North Staffordshire Railway' was known as the 'Knotty'.",
         "The first railway in Somalia was the Mogadishu-Villabruzzi Railway, opened in 1914.",
         "The 'Hull \u0026 Barnsley Railway' was built to break the monopoly of the NER.",
@@ -305,7 +303,7 @@ object TrainFactsProvider {
         "The first railway in Burundi was a small industrial line.",
         "The 'Great Central' motto was 'Forward'.",
         "The first railway in Malawi was the Shire Highlands Railway, opened in 1908.",
-        "The 'Great Western' motto was 'Dominine Dirige Nos'.",
+        "The 'Great Western' motto was 'Domine Dirige Nos'.",
         "The first railway in Swaziland was the Swaziland Railway, opened in 1964.",
         "The 'Southern' motto was 'Semper Sursum'.",
         "The first railway in Lesotho was the Maseru Branch line, opened in 1905.",
@@ -314,10 +312,8 @@ object TrainFactsProvider {
         "The 'London \u0026 North Eastern' was another of the 'Big Four' companies.",
         "The first railway in Guinea-Bissau was a small industrial line.",
         "The 'Southern Railway' was the smallest of the Big Four.",
-        "The first railway in Cape Verde was a small industrial line.",
         "The 'Great Western Railway' was the only one to keep its name in 1923.",
-        "The first railway in Seychelles was a small industrial line.",
-        "The 'British Railways' was formed by nationalisation in 1948.",
+        "'British Rail' was formed by nationalisation in 1948.",
         "The first railway in Saint Helena was the Ladder Hill Railway, opened in 1829.",
         "The 'InterCity 125' was a revolutionary high-speed diesel train.",
         "The first railway in Falkland Islands was the Camber Railway, opened in 1915.",
@@ -366,53 +362,56 @@ object TrainFactsProvider {
         "The 'Stansted Express' connects the City of London to Stansted Airport.",
         "The first railway in Fiji was a sugar railway, opened in 1882.",
         "The 'London Underground' has 11 lines and 272 stations.",
-        "The first railway in Solomon Islands was a small industrial line.",
         "The 'Glasgow Subway' is known affectionately as the 'Clockwork Orange'.",
-        "The first railway in Vanuatu was a small industrial line.",
         "The 'Tyne \u0026 Wear Metro' uses a unique mix of heavy and light rail technology.",
         "The first railway in New Caledonia was the Noumea-Paita line, opened in 1901.",
         "The 'Docklands Light Railway' was originally built using existing railway infrastructure.",
         "The first railway in Guam was a small military railway.",
         "The 'Elizabeth Line' is named after Queen Elizabeth II.",
-        "The first railway in Northern Mariana Islands was a small industrial line.",
-        "The 'Channel Tunnel' is the longest undersea tunnel in the world (already mentioned).",
+        "The first railroad in the US was the Baltimore and Ohio Railroad.",
         "The first railway in American Samoa was a small military railway.",
         "The 'Humber Bridge' was never designed to carry a railway (fun fact!).",
-        "The first railway in Palau was a small industrial line.",
         "The 'Forth Bridge' is iconic for its cantilever design.",
-        "The first railway in Marshall Islands was a small industrial line.",
         "The 'Tay Bridge Disaster' in 1879 led to the design of the current bridge.",
-        "The first railway in Kiribati was a small industrial line.",
         "The 'Ribblehead Viaduct' is 400 metres long and has 24 arches.",
-        "The first railway in Tuvalu was a small industrial line.",
         "The 'Glenfinnan Viaduct' has 21 arches.",
-        "The first railway in Micronesia was a small industrial line.",
         "The 'Bennerley Viaduct' near Nottingham is a rare iron structure.",
-        "The first railway in Tonga was a small industrial line.",
         "The 'St. Pancras Hotel' is a masterpiece of Gothic Revival architecture.",
-        "The first railway in Samoa was a small industrial line.",
-        "The 'Victoria Station' in Nottingham once had a very deep tunnel.",
-        "The first railway in Niue was a small industrial line.",
+        "'Victoria Station' in Nottingham once had a very deep tunnel.",
+        "The first American-built steam locomotive was the Tom Thumb.",
         "The 'Old Dalby Test Track' is a key facility for testing new trains in the UK.",
-        "The first railway in Cook Islands was a small industrial line.",
         "The 'Great Western' is often called 'God's Wonderful Railway'.",
-        "The first railway in Wallis and Futuna was a small industrial line.",
         "The 'Dawlish Sea Wall' is one of Brunel's most daring engineering feats.",
-        "The first railway in Tokelau was a small industrial line.",
         "The 'Midland Main Line' was electrified to Corby in 2021.",
-        "The first railway in Pitcairn Islands was a small industrial line.",
-        "The 'Big Boy' locomotive 4014 is the only one currently operating."
+        "The 'Big Boy' locomotive 4014 is the largest operating steam locomotive in the world.",
+        "The first railway in South America was built in British Guiana in 1848.",
+        "The 'Budapest Tram' system is known for its yellow cars.",
+        "The 'Tren a las Nubes' in Argentina is one of the highest railways in the world.",
+        "Only one locomotive has flown across the Atlantic Ocean - a test locomotive for Iarnród Eireann was delivered to Dublin from the USA by air.",
+        "Brake vans only officially became obsolete in 2021.",
+        "The Northern Line of the London Underground is not the tube line that goes furthest north, but is the tube line that goes furthest south.",
+        "The Bucharest to Chisinau sleeper, is the last soviet era built train running within Europe. When it gets to the border the have to swap the wheels over due to different track gauges.",
+        "Oliver Bulleid's final steam locomotive, CC1, was designed to burn turf.",
+        "In the late 19th century, the London and North Western Railway was the largest public company in the world, measured by market value.",
+        "The platforms at Long Eaton station are too short to accommodate the Meridian trains used by EMR intercity services.",
+        "EMR Meridian unit number 222104 is the only one in its class to have a full purple livery.",
+        "The largest station in the UK to close, in terms of platform numbers, was Blackpool Central with 14 platforms.",
+        "A large proportion of Transport for Wales Class 150 trains have a piece of black tape in the top right corner of the front windscreen for an unknown reason.",
+        "In the village of Brundall in Norfolk, a local railway information sign is located a 15-minute walk from the actual station.",
+        "A few original British Rail-era signs survive today, including one at Saltaire, one at London Paddington (Platform 12), and one at Warminster."
     )
 
     fun getFactForToday(): String {
+        return getFactForTime(System.currentTimeMillis())
+    }
+
+    internal fun getFactForTime(timeInMillis: Long): String {
         val calendar = Calendar.getInstance()
-        val timeInMillis = calendar.timeInMillis
+        calendar.timeInMillis = timeInMillis
         // Adjust for local timezone offset to ensure "00:00 local device time"
         val localTimeInMillis = timeInMillis + calendar.timeZone.getOffset(timeInMillis)
         val daysSinceEpoch = localTimeInMillis / (24 * 60 * 60 * 1000)
         
-        // Using a modulus with facts.size (which is 366) ensures a stable rotation.
-        // Since we have at least 366 facts, no fact repeats within any 366-day window.
         val index = (daysSinceEpoch % facts.size).toInt()
         return facts[index]
     }
