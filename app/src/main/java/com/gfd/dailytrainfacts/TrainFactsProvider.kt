@@ -1,9 +1,10 @@
 package com.gfd.dailytrainfacts
 
 import java.util.Calendar
+import java.util.Random
 
 object TrainFactsProvider {
-    internal val facts = listOf(
+    internal val rawFacts = listOf(
         "The first steam locomotive was built by Richard Trevithick in 1804.",
         "The fastest train in the world is the Shanghai Maglev, reaching 267 mph.",
         "The Trans-Siberian Railway is the longest railway line in the world.",
@@ -400,6 +401,8 @@ object TrainFactsProvider {
         "In the village of Brundall in Norfolk, a local railway information sign is located a 15-minute walk from the actual station.",
         "A few original British Rail-era signs survive today, including one at Saltaire, one at London Paddington (Platform 12), and one at Warminster."
     )
+
+    internal val facts = rawFacts.shuffled(Random(42))
 
     fun getFactForToday(): String {
         return getFactForTime(System.currentTimeMillis())

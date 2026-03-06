@@ -52,4 +52,14 @@ class TrainFactsProviderTest {
         
         assertEquals(totalFacts, seenFacts.size)
     }
+
+    @Test
+    fun facts_areShuffled() {
+        val rawFacts = TrainFactsProvider.rawFacts
+        val shuffledFacts = TrainFactsProvider.facts
+        
+        assertEquals("Shuffled list should have the same size as raw list", rawFacts.size, shuffledFacts.size)
+        assertNotEquals("Facts should be in a different order", rawFacts, shuffledFacts)
+        assertTrue("Shuffled list should contain all original facts", shuffledFacts.containsAll(rawFacts))
+    }
 }
