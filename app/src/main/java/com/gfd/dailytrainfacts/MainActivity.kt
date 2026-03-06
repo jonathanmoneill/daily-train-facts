@@ -4,13 +4,17 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -51,47 +55,54 @@ fun TrainFactsApp() {
 @Composable
 fun HomeScreen(onGiveMeFactClicked: () -> Unit) {
     Box(modifier = Modifier.fillMaxSize()) {
+        // Full size background image
+        Image(
+            painter = painterResource(id = R.drawable.train_background_home),
+            contentDescription = null,
+            modifier = Modifier.fillMaxSize(),
+            contentScale = ContentScale.Crop
+        )
+
+        // Semi-transparent overlay to make text readable
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .background(Color(0xFF2C3E50))
+                .background(Color.Black.copy(alpha = 0.4f))
+        )
+
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(bottom = 135.dp), // Pushes the content higher than center
+            verticalArrangement = Arrangement.Center,
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Column(
-                modifier = Modifier.fillMaxSize(),
-                verticalArrangement = Arrangement.Center,
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                Text(
-                    text = "🚂",
-                    fontSize = 120.sp
-                )
-                Spacer(modifier = Modifier.height(16.dp))
-                Text(
-                    text = "DAILY TRAIN FACTS",
-                    color = Color.White,
-                    fontSize = 36.sp,
-                    fontWeight = FontWeight.ExtraBold,
-                    textAlign = TextAlign.Center
-                )
-                Text(
-                    text = "Discover the world of rails",
-                    color = Color.LightGray,
-                    fontSize = 18.sp,
-                    textAlign = TextAlign.Center
-                )
-            }
+            Text(
+                text = "DAILY TRAIN FACTS",
+                color = Color.White,
+                fontSize = 36.sp,
+                fontWeight = FontWeight.ExtraBold,
+                textAlign = TextAlign.Center
+            )
         }
 
         Button(
             onClick = onGiveMeFactClicked,
             modifier = Modifier
                 .align(Alignment.BottomCenter)
-                .padding(bottom = 80.dp)
+                .padding(bottom = 135.dp) // Pushes the button higher up from the bottom
+                .padding(horizontal = 40.dp)
                 .height(64.dp)
-                .width(280.dp),
-            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFE67E22))
+                .fillMaxWidth(),
+            shape = RoundedCornerShape(8.dp),
+            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF009688))
         ) {
-            Text(text = "Give Me a Train Fact", fontSize = 20.sp, fontWeight = FontWeight.Bold)
+            Text(
+                text = "Give Me a Train Fact",
+                fontSize = 20.sp,
+                fontWeight = FontWeight.Bold,
+                color = Color.White
+            )
         }
     }
 }
@@ -117,6 +128,17 @@ fun FactScreen(onExitClicked: () -> Unit) {
             modifier = Modifier.weight(1f),
             verticalArrangement = Arrangement.Center
         ) {
+            // Header Image
+            Image(
+                painter = painterResource(id = R.drawable.train_silhouette),
+                contentDescription = "Train Illustration",
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(200.dp)
+                    .padding(bottom = 24.dp),
+                contentScale = ContentScale.Fit
+            )
+
             Text(
                 text = currentDate,
                 style = MaterialTheme.typography.headlineSmall,
@@ -140,8 +162,10 @@ fun FactScreen(onExitClicked: () -> Unit) {
             Text(
                 text = "Come back tomorrow for more facts",
                 style = MaterialTheme.typography.bodyLarge,
-                color = Color.Gray,
-                fontStyle = FontStyle.Italic
+                fontSize = 24.sp,
+                color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f),
+                fontStyle = FontStyle.Italic,
+                textAlign = TextAlign.Center
             )
         }
 
@@ -150,7 +174,8 @@ fun FactScreen(onExitClicked: () -> Unit) {
             modifier = Modifier
                 .padding(bottom = 48.dp)
                 .fillMaxWidth()
-                .height(56.dp)
+                .height(56.dp),
+            shape = RoundedCornerShape(8.dp)
         ) {
             Text(text = "Exit", fontSize = 18.sp)
         }
