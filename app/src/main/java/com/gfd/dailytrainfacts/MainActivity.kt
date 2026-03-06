@@ -99,10 +99,9 @@ fun HomeScreen(onGiveMeFactClicked: () -> Unit) {
 @Composable
 fun FactScreen(onExitClicked: () -> Unit) {
     val calendar = Calendar.getInstance()
-    val dayOfYear = calendar.get(Calendar.DAY_OF_YEAR)
     val dateFormat = SimpleDateFormat("EEEE, MMMM d, yyyy", Locale.getDefault())
     val currentDate = dateFormat.format(calendar.time)
-    val fact = TrainFactsProvider.getFactForDay(dayOfYear)
+    val fact = TrainFactsProvider.getFactForToday()
 
     Column(
         modifier = Modifier
