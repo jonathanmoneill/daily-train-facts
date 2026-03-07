@@ -1,5 +1,6 @@
 package com.gfd.dailytrainfacts
 
+import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -9,12 +10,15 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.selection.SelectionContainer
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -125,6 +129,7 @@ fun FactScreen(onExitClicked: () -> Unit) {
     val dateFormat = SimpleDateFormat("EEEE, MMMM d, yyyy", Locale.getDefault())
     val currentDate = dateFormat.format(calendar.time)
     val fact = TrainFactsProvider.getFactForToday()
+    val context = LocalContext.current
 
     Column(
         modifier = Modifier
@@ -172,9 +177,34 @@ fun FactScreen(onExitClicked: () -> Unit) {
                     )
                 }
             }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // Standard Android Sharing Button
+            FilledTonalButton(
+                onClick = {
+                    val sendIntent: Intent = Intent().apply {
+                        action = Intent.ACTION_SEND
+                        putExtra(Intent.EXTRA_TEXT, "Did you know? $fact #DailyTrainFacts")
+                        type = "text/plain"
+                    }
+                    val shareIntent = Intent.createChooser(sendIntent, null)
+                    context.startActivity(shareIntent)
+                },
+                shape = RoundedCornerShape(8.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Share,
+                    contentDescription = "Share",
+                    modifier = Modifier.size(ButtonDefaults.IconSize)
+                )
+                Spacer(Modifier.size(ButtonDefaults.IconSpacing))
+                Text("Share this Fact")
+            }
+
             Spacer(modifier = Modifier.height(40.dp))
             Text(
-                text = "Come back tomorrow for more facts",
+                text = "Come back tomorrow for a new train fact...",
                 style = MaterialTheme.typography.bodyLarge,
                 fontSize = 24.sp,
                 color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f),
