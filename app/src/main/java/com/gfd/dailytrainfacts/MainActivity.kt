@@ -104,6 +104,17 @@ fun HomeScreen(onGiveMeFactClicked: () -> Unit) {
                 color = Color.White
             )
         }
+
+        // Copyright text
+        Text(
+            text = "© 2026 Fear Dóighiúil Studios",
+            color = Color.LightGray.copy(alpha = 1f),
+            fontSize = 12.sp,
+            fontWeight = FontWeight.Bold,
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .padding(bottom = 24.dp)
+        )
     }
 }
 
