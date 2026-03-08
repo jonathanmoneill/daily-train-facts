@@ -1,7 +1,6 @@
 package com.gfd.dailytrainfacts
 
 import android.Manifest
-import android.app.TimePickerDialog
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
@@ -34,6 +33,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import androidx.core.content.ContextCompat
 import com.gfd.dailytrainfacts.ui.theme.DailyTrainFactsTheme
 import java.text.SimpleDateFormat
@@ -141,8 +142,8 @@ fun FactScreen(onExitClicked: () -> Unit) {
     val fact = TrainFactsProvider.getFactForToday()
     val context = LocalContext.current
 
-    val (showMenu, setShowMenu) = remember { mutableStateOf(false) }
-    val (showOptionsDialog, setShowOptionsDialog) = remember { mutableStateOf(false) }
+    val showMenu = remember { mutableStateOf(false) }
+    val showOptionsDialog = remember { mutableStateOf(false) }
 
     Box(modifier = Modifier.fillMaxSize()) {
         Column(
@@ -241,21 +242,21 @@ fun FactScreen(onExitClicked: () -> Unit) {
 
         // Options Menu Icon
         IconButton(
-            onClick = { setShowMenu(true) },
+            onClick = { showMenu.value = true },
             modifier = Modifier
                 .align(Alignment.TopEnd)
                 .padding(top = 48.dp, end = 16.dp)
         ) {
             Icon(Icons.Default.MoreVert, contentDescription = "Options")
             DropdownMenu(
-                expanded = showMenu,
-                onDismissRequest = { setShowMenu(false) }
+                expanded = showMenu.value,
+                onDismissRequest = { showMenu.value = false }
             ) {
                 DropdownMenuItem(
                     text = { Text("Reminder Settings") },
                     onClick = {
-                        setShowMenu(false)
-                        setShowOptionsDialog(true)
+                        showMenu.value = false
+                        showOptionsDialog.value = true
                     },
                     leadingIcon = { Icon(Icons.Default.Notifications, contentDescription = null) }
                 )
@@ -263,28 +264,61 @@ fun FactScreen(onExitClicked: () -> Unit) {
         }
     }
 
-    if (showOptionsDialog) {
-        ReminderOptionsDialog(onDismiss = { setShowOptionsDialog(false) })
+    if (showOptionsDialog.value) {
+        ReminderOptionsDialog(onDismiss = { showOptionsDialog.value = false })
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ReminderOptionsDialog(onDismiss: () -> Unit) {
     val context = LocalContext.current
-    val (isEnabled, setIsEnabled) = remember { mutableStateOf(ReminderManager.isReminderEnabled(context)) }
+    val isEnabled = remember { mutableStateOf(ReminderManager.isReminderEnabled(context)) }
 
     val initialTime = remember { ReminderManager.getReminderTime(context) }
     var selectedHour by remember { mutableIntStateOf(initialTime.first) }
     var selectedMinute by remember { mutableIntStateOf(initialTime.second) }
+
+    val showTimePicker = remember { mutableStateOf(false) }
+    val timePickerState = rememberTimePickerState(
+        initialHour = selectedHour,
+        initialMinute = selectedMinute,
+        is24Hour = true
+    )
 
     val permissionLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestPermission()
     ) { isGranted ->
         if (isGranted) {
             ReminderManager.setReminder(context, true, selectedHour, selectedMinute)
-            setIsEnabled(true)
+            isEnabled.value = true
         } else {
             Toast.makeText(context, "Notification permission required for reminders", Toast.LENGTH_LONG).show()
+        }
+    }
+
+    if (showTimePicker.value) {
+        TimePickerDialog(
+            onDismissRequest = { showTimePicker.value = false },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        selectedHour = timePickerState.hour
+                        selectedMinute = timePickerState.minute
+                        if (isEnabled.value) {
+                            ReminderManager.setReminder(context, true, selectedHour, selectedMinute)
+                        }
+                        showTimePicker.value = false
+                    }
+                ) { Text("OK") }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = { showTimePicker.value = false }
+                ) { Text("Cancel") }
+            }
+        ) {
+            TimePicker(state = timePickerState)
         }
     }
 
@@ -299,23 +333,23 @@ fun ReminderOptionsDialog(onDismiss: () -> Unit) {
                 ) {
                     Text("Enable Reminders", modifier = Modifier.weight(1f))
                     Switch(
-                        checked = isEnabled,
+                        checked = isEnabled.value,
                         onCheckedChange = { checked ->
                             if (checked) {
                                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                                     if (ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED) {
                                         ReminderManager.setReminder(context, true, selectedHour, selectedMinute)
-                                        setIsEnabled(true)
+                                        isEnabled.value = true
                                     } else {
                                         permissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
                                     }
                                 } else {
                                     ReminderManager.setReminder(context, true, selectedHour, selectedMinute)
-                                    setIsEnabled(true)
+                                    isEnabled.value = true
                                 }
                             } else {
                                 ReminderManager.setReminder(context, false, selectedHour, selectedMinute)
-                                setIsEnabled(false)
+                                isEnabled.value = false
                             }
                         }
                     )
@@ -325,19 +359,7 @@ fun ReminderOptionsDialog(onDismiss: () -> Unit) {
                 
                 TextButton(
                     onClick = {
-                        TimePickerDialog(
-                            context,
-                            { _, h, m ->
-                                selectedHour = h
-                                selectedMinute = m
-                                if (isEnabled) {
-                                    ReminderManager.setReminder(context, true, h, m)
-                                }
-                            },
-                            selectedHour,
-                            selectedMinute,
-                            true
-                        ).show()
+                        showTimePicker.value = true
                     },
                     modifier = Modifier.fillMaxWidth()
                 ) {
@@ -351,4 +373,56 @@ fun ReminderOptionsDialog(onDismiss: () -> Unit) {
             }
         }
     )
+}
+
+@Composable
+fun TimePickerDialog(
+    title: String = "Select Time",
+    onDismissRequest: () -> Unit,
+    confirmButton: @Composable () -> Unit,
+    dismissButton: @Composable () -> Unit,
+    content: @Composable () -> Unit,
+) {
+    Dialog(
+        onDismissRequest = onDismissRequest,
+        properties = DialogProperties(
+            usePlatformDefaultWidth = false
+        ),
+    ) {
+        Surface(
+            shape = MaterialTheme.shapes.extraLarge,
+            tonalElevation = 6.dp,
+            modifier = Modifier
+                .width(IntrinsicSize.Min)
+                .height(IntrinsicSize.Min)
+                .background(
+                    shape = MaterialTheme.shapes.extraLarge,
+                    color = MaterialTheme.colorScheme.surface
+                ),
+            color = MaterialTheme.colorScheme.surface
+        ) {
+            Column(
+                modifier = Modifier.padding(24.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 20.dp),
+                    text = title,
+                    style = MaterialTheme.typography.labelMedium
+                )
+                content()
+                Row(
+                    modifier = Modifier
+                        .height(40.dp)
+                        .fillMaxWidth(),
+                    horizontalArrangement = Arrangement.End
+                ) {
+                    dismissButton()
+                    confirmButton()
+                }
+            }
+        }
+    }
 }
