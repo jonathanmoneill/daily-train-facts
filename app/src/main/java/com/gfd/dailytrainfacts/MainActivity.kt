@@ -175,7 +175,7 @@ fun FactScreen(
     val context = LocalContext.current
     val haptic = LocalHapticFeedback.current
 
-    val (showMenu, setShowMenu) = remember { mutableStateOf(false) }
+    var showMenu by remember { mutableStateOf(false) }
     val (showOptionsDialog, setShowOptionsDialog) = remember { mutableStateOf(false) }
     
     var isFavorite by remember { mutableStateOf(FavoritesManager.isFavorite(context, fact)) }
@@ -298,7 +298,7 @@ fun FactScreen(
 
         // Options Menu Icon
         IconButton(
-            onClick = { setShowMenu(true) },
+            onClick = { showMenu = true },
             modifier = Modifier
                 .align(Alignment.TopStart)
                 .padding(top = 48.dp, start = 16.dp)
@@ -306,12 +306,12 @@ fun FactScreen(
             Icon(Icons.Default.Settings, contentDescription = "Settings")
             DropdownMenu(
                 expanded = showMenu,
-                onDismissRequest = { setShowMenu(false) }
+                onDismissRequest = { showMenu = false }
             ) {
                 DropdownMenuItem(
                     text = { Text("Reminder Settings") },
                     onClick = {
-                        setShowMenu(false)
+                        showMenu = false
                         setShowOptionsDialog(true)
                     },
                     leadingIcon = { Icon(Icons.Default.Notifications, contentDescription = null) }
@@ -319,7 +319,7 @@ fun FactScreen(
                 DropdownMenuItem(
                     text = { Text("Favorite Facts") },
                     onClick = {
-                        setShowMenu(false)
+                        showMenu = false
                         onNavigateToFavorites()
                     },
                     leadingIcon = { Icon(Icons.Default.Favorite, contentDescription = null) }
