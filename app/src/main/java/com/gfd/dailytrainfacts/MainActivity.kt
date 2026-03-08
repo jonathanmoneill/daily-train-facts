@@ -15,12 +15,13 @@ import androidx.compose.animation.*
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Notifications
-import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material.icons.filled.Share
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -56,7 +57,7 @@ class MainActivity : ComponentActivity() {
 }
 
 enum class Screen {
-    Home, Fact
+    Home, Fact, Favorites
 }
 
 @Composable
@@ -73,7 +74,11 @@ fun TrainFactsApp() {
         ) { screen ->
             when (screen) {
                 Screen.Home -> HomeScreen(onGiveMeFactClicked = { currentScreen = Screen.Fact })
-                Screen.Fact -> FactScreen(onExitClicked = { currentScreen = Screen.Home })
+                Screen.Fact -> FactScreen(
+                    onExitClicked = { currentScreen = Screen.Home },
+                    onNavigateToFavorites = { currentScreen = Screen.Favorites }
+                )
+                Screen.Favorites -> FavoritesScreen(onBackClicked = { currentScreen = Screen.Fact })
             }
         }
     }
@@ -151,7 +156,7 @@ fun HomeScreen(onGiveMeFactClicked: () -> Unit) {
 }
 
 @Composable
-fun FactScreen(onExitClicked: () -> Unit) {
+fun FactScreen(onExitClicked: () -> Unit, onNavigateToFavorites: () -> Unit) {
     val calendar = Calendar.getInstance()
     val dateFormat = SimpleDateFormat("EEEE, MMMM d, yyyy", Locale.getDefault())
     val currentDate = dateFormat.format(calendar.time)
@@ -161,6 +166,8 @@ fun FactScreen(onExitClicked: () -> Unit) {
 
     val showMenu = remember { mutableStateOf(false) }
     val showOptionsDialog = remember { mutableStateOf(false) }
+    
+    var isFavorite by remember { mutableStateOf(FavoritesManager.isFavorite(context, fact)) }
 
     Box(modifier = Modifier.fillMaxSize()) {
         Column(
@@ -199,14 +206,31 @@ fun FactScreen(onExitClicked: () -> Unit) {
                     modifier = Modifier.fillMaxWidth(),
                     elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
                 ) {
-                    SelectionContainer {
-                        Text(
-                            text = fact,
-                            style = MaterialTheme.typography.headlineMedium,
-                            textAlign = TextAlign.Center,
-                            modifier = Modifier.padding(24.dp),
-                            lineHeight = 36.sp
-                        )
+                    Box(modifier = Modifier.fillMaxWidth()) {
+                        SelectionContainer {
+                            Text(
+                                text = fact,
+                                style = MaterialTheme.typography.headlineMedium,
+                                textAlign = TextAlign.Center,
+                                modifier = Modifier.padding(24.dp),
+                                lineHeight = 36.sp
+                            )
+                        }
+                        
+                        IconButton(
+                            onClick = {
+                                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                FavoritesManager.toggleFavorite(context, fact)
+                                isFavorite = !isFavorite
+                            },
+                            modifier = Modifier.align(Alignment.TopEnd).padding(4.dp)
+                        ) {
+                            Icon(
+                                imageVector = if (isFavorite) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
+                                contentDescription = if (isFavorite) "Remove from favorites" else "Add to favorites",
+                                tint = if (isFavorite) Color.Red else LocalContentColor.current
+                            )
+                        }
                     }
                 }
 
@@ -280,6 +304,14 @@ fun FactScreen(onExitClicked: () -> Unit) {
                         showOptionsDialog.value = true
                     },
                     leadingIcon = { Icon(Icons.Default.Notifications, contentDescription = null) }
+                )
+                DropdownMenuItem(
+                    text = { Text("Favorite Facts") },
+                    onClick = {
+                        showMenu.value = false
+                        onNavigateToFavorites()
+                    },
+                    leadingIcon = { Icon(Icons.Default.Favorite, contentDescription = null) }
                 )
             }
         }
@@ -401,6 +433,67 @@ fun ReminderOptionsDialog(onDismiss: () -> Unit) {
             }
         }
     )
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun FavoritesScreen(onBackClicked: () -> Unit) {
+    val context = LocalContext.current
+    val haptic = LocalHapticFeedback.current
+    val favorites = remember { mutableStateListOf<String>().apply { addAll(FavoritesManager.getFavorites(context)) } }
+
+    Scaffold(
+        topBar = {
+            CenterAlignedTopAppBar(
+                title = { Text("Favorite Facts", fontWeight = FontWeight.Bold) },
+                navigationIcon = {
+                    IconButton(onClick = {
+                        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                        onBackClicked()
+                    }) {
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                    }
+                }
+            )
+        }
+    ) { padding ->
+        if (favorites.isEmpty()) {
+            Box(modifier = Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.Center) {
+                Text("No favorites yet.", style = MaterialTheme.typography.bodyLarge, color = Color.Gray)
+            }
+        } else {
+            LazyColumn(
+                modifier = Modifier.fillMaxSize().padding(padding),
+                contentPadding = PaddingValues(16.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                items(favorites) { fact ->
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(16.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = fact,
+                                style = MaterialTheme.typography.bodyLarge,
+                                modifier = Modifier.weight(1f)
+                            )
+                            IconButton(onClick = {
+                                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                FavoritesManager.toggleFavorite(context, fact)
+                                favorites.remove(fact)
+                            }) {
+                                Icon(Icons.Default.Favorite, contentDescription = "Remove from favorites", tint = Color.Red)
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
 }
 
 @Composable
