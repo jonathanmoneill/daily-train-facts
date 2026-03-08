@@ -11,6 +11,7 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.*
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -25,8 +26,10 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -61,15 +64,25 @@ fun TrainFactsApp() {
     var currentScreen by remember { mutableStateOf(Screen.Home) }
 
     Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
-        when (currentScreen) {
-            Screen.Home -> HomeScreen(onGiveMeFactClicked = { currentScreen = Screen.Fact })
-            Screen.Fact -> FactScreen(onExitClicked = { currentScreen = Screen.Home })
+        AnimatedContent(
+            targetState = currentScreen,
+            transitionSpec = {
+                fadeIn() togetherWith fadeOut()
+            },
+            label = "ScreenTransition"
+        ) { screen ->
+            when (screen) {
+                Screen.Home -> HomeScreen(onGiveMeFactClicked = { currentScreen = Screen.Fact })
+                Screen.Fact -> FactScreen(onExitClicked = { currentScreen = Screen.Home })
+            }
         }
     }
 }
 
 @Composable
 fun HomeScreen(onGiveMeFactClicked: () -> Unit) {
+    val haptic = LocalHapticFeedback.current
+    
     Box(modifier = Modifier.fillMaxSize()) {
         // Full size background image
         Image(
@@ -103,7 +116,10 @@ fun HomeScreen(onGiveMeFactClicked: () -> Unit) {
         }
 
         Button(
-            onClick = onGiveMeFactClicked,
+            onClick = {
+                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                onGiveMeFactClicked()
+            },
             modifier = Modifier
                 .align(Alignment.BottomCenter)
                 .padding(bottom = 135.dp) // Pushes the button higher up from the bottom
@@ -141,6 +157,7 @@ fun FactScreen(onExitClicked: () -> Unit) {
     val currentDate = dateFormat.format(calendar.time)
     val fact = TrainFactsProvider.getFactForToday()
     val context = LocalContext.current
+    val haptic = LocalHapticFeedback.current
 
     val showMenu = remember { mutableStateOf(false) }
     val showOptionsDialog = remember { mutableStateOf(false) }
@@ -198,6 +215,7 @@ fun FactScreen(onExitClicked: () -> Unit) {
                 // Standard Android Sharing Button
                 FilledTonalButton(
                     onClick = {
+                        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                         val sendIntent: Intent = Intent().apply {
                             action = Intent.ACTION_SEND
                             putExtra(Intent.EXTRA_TEXT, "Did you know? $fact #DailyTrainFacts")
@@ -229,7 +247,10 @@ fun FactScreen(onExitClicked: () -> Unit) {
             }
 
             Button(
-                onClick = onExitClicked,
+                onClick = {
+                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                    onExitClicked()
+                },
                 modifier = Modifier
                     .padding(bottom = 48.dp)
                     .fillMaxWidth()
@@ -240,7 +261,7 @@ fun FactScreen(onExitClicked: () -> Unit) {
             }
         }
 
-        // Options Menu Icon - Updated to Settings icon
+        // Options Menu Icon
         IconButton(
             onClick = { showMenu.value = true },
             modifier = Modifier
@@ -273,6 +294,7 @@ fun FactScreen(onExitClicked: () -> Unit) {
 @Composable
 fun ReminderOptionsDialog(onDismiss: () -> Unit) {
     val context = LocalContext.current
+    val haptic = LocalHapticFeedback.current
     val isEnabled = remember { mutableStateOf(ReminderManager.isReminderEnabled(context)) }
 
     val initialTime = remember { ReminderManager.getReminderTime(context) }
@@ -303,6 +325,7 @@ fun ReminderOptionsDialog(onDismiss: () -> Unit) {
             confirmButton = {
                 TextButton(
                     onClick = {
+                        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                         selectedHour = timePickerState.hour
                         selectedMinute = timePickerState.minute
                         if (isEnabled.value) {
@@ -335,6 +358,7 @@ fun ReminderOptionsDialog(onDismiss: () -> Unit) {
                     Switch(
                         checked = isEnabled.value,
                         onCheckedChange = { checked ->
+                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                             if (checked) {
                                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                                     if (ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED) {
@@ -358,8 +382,9 @@ fun ReminderOptionsDialog(onDismiss: () -> Unit) {
                 Spacer(modifier = Modifier.height(16.dp))
                 
                 TextButton(
-                    onClick = {
-                        showTimePicker.value = true
+                    onClick = { 
+                        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                        showTimePicker.value = true 
                     },
                     modifier = Modifier.fillMaxWidth()
                 ) {
@@ -368,7 +393,10 @@ fun ReminderOptionsDialog(onDismiss: () -> Unit) {
             }
         },
         confirmButton = {
-            TextButton(onClick = onDismiss) {
+            TextButton(onClick = {
+                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                onDismiss()
+            }) {
                 Text("Done")
             }
         }
