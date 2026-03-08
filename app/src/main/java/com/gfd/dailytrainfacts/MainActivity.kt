@@ -17,8 +17,8 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Notifications
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -240,14 +240,14 @@ fun FactScreen(onExitClicked: () -> Unit) {
             }
         }
 
-        // Options Menu Icon
+        // Options Menu Icon - Updated to Settings icon
         IconButton(
             onClick = { showMenu.value = true },
             modifier = Modifier
-                .align(Alignment.TopEnd)
-                .padding(top = 48.dp, end = 16.dp)
+                .align(Alignment.TopStart)
+                .padding(top = 48.dp, start = 16.dp)
         ) {
-            Icon(Icons.Default.MoreVert, contentDescription = "Options")
+            Icon(Icons.Default.Settings, contentDescription = "Settings")
             DropdownMenu(
                 expanded = showMenu.value,
                 onDismissRequest = { showMenu.value = false }
