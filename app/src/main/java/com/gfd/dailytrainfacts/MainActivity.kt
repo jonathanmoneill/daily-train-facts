@@ -2,7 +2,6 @@ package com.gfd.dailytrainfacts
 
 import android.Manifest
 import android.content.Intent
-import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
 import android.widget.Toast
@@ -39,7 +38,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
-import androidx.core.content.ContextCompat
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.gfd.dailytrainfacts.ui.theme.DailyTrainFactsTheme
 import java.text.SimpleDateFormat
 import java.util.*
@@ -50,7 +49,14 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             DailyTrainFactsTheme {
-                TrainFactsApp()
+                val viewModel: TrainFactsViewModel = viewModel()
+                val context = LocalContext.current
+                
+                LaunchedEffect(Unit) {
+                    viewModel.init(context)
+                }
+                
+                TrainFactsApp(viewModel)
             }
         }
     }
@@ -61,8 +67,8 @@ enum class Screen {
 }
 
 @Composable
-fun TrainFactsApp() {
-    var currentScreen by remember { mutableStateOf(Screen.Home) }
+fun TrainFactsApp(viewModel: TrainFactsViewModel) {
+    val currentScreen by viewModel.currentScreen
 
     Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
         AnimatedContent(
@@ -73,12 +79,13 @@ fun TrainFactsApp() {
             label = "ScreenTransition"
         ) { screen ->
             when (screen) {
-                Screen.Home -> HomeScreen(onGiveMeFactClicked = { currentScreen = Screen.Fact })
+                Screen.Home -> HomeScreen(onGiveMeFactClicked = { viewModel.navigateTo(Screen.Fact) })
                 Screen.Fact -> FactScreen(
-                    onExitClicked = { currentScreen = Screen.Home },
-                    onNavigateToFavorites = { currentScreen = Screen.Favorites }
+                    onExitClicked = { viewModel.navigateTo(Screen.Home) },
+                    onNavigateToFavorites = { viewModel.navigateTo(Screen.Favorites) },
+                    viewModel = viewModel
                 )
-                Screen.Favorites -> FavoritesScreen(onBackClicked = { currentScreen = Screen.Fact })
+                Screen.Favorites -> FavoritesScreen(onBackClicked = { viewModel.navigateTo(Screen.Fact) })
             }
         }
     }
@@ -156,7 +163,11 @@ fun HomeScreen(onGiveMeFactClicked: () -> Unit) {
 }
 
 @Composable
-fun FactScreen(onExitClicked: () -> Unit, onNavigateToFavorites: () -> Unit) {
+fun FactScreen(
+    onExitClicked: () -> Unit, 
+    onNavigateToFavorites: () -> Unit,
+    viewModel: TrainFactsViewModel
+) {
     val calendar = Calendar.getInstance()
     val dateFormat = SimpleDateFormat("EEEE, MMMM d, yyyy", Locale.getDefault())
     val currentDate = dateFormat.format(calendar.time)
@@ -164,8 +175,8 @@ fun FactScreen(onExitClicked: () -> Unit, onNavigateToFavorites: () -> Unit) {
     val context = LocalContext.current
     val haptic = LocalHapticFeedback.current
 
-    val showMenu = remember { mutableStateOf(false) }
-    val showOptionsDialog = remember { mutableStateOf(false) }
+    val (showMenu, setShowMenu) = remember { mutableStateOf(false) }
+    val (showOptionsDialog, setShowOptionsDialog) = remember { mutableStateOf(false) }
     
     var isFavorite by remember { mutableStateOf(FavoritesManager.isFavorite(context, fact)) }
 
@@ -287,28 +298,28 @@ fun FactScreen(onExitClicked: () -> Unit, onNavigateToFavorites: () -> Unit) {
 
         // Options Menu Icon
         IconButton(
-            onClick = { showMenu.value = true },
+            onClick = { setShowMenu(true) },
             modifier = Modifier
                 .align(Alignment.TopStart)
                 .padding(top = 48.dp, start = 16.dp)
         ) {
             Icon(Icons.Default.Settings, contentDescription = "Settings")
             DropdownMenu(
-                expanded = showMenu.value,
-                onDismissRequest = { showMenu.value = false }
+                expanded = showMenu,
+                onDismissRequest = { setShowMenu(false) }
             ) {
                 DropdownMenuItem(
                     text = { Text("Reminder Settings") },
                     onClick = {
-                        showMenu.value = false
-                        showOptionsDialog.value = true
+                        setShowMenu(false)
+                        setShowOptionsDialog(true)
                     },
                     leadingIcon = { Icon(Icons.Default.Notifications, contentDescription = null) }
                 )
                 DropdownMenuItem(
                     text = { Text("Favorite Facts") },
                     onClick = {
-                        showMenu.value = false
+                        setShowMenu(false)
                         onNavigateToFavorites()
                     },
                     leadingIcon = { Icon(Icons.Default.Favorite, contentDescription = null) }
@@ -317,59 +328,57 @@ fun FactScreen(onExitClicked: () -> Unit, onNavigateToFavorites: () -> Unit) {
         }
     }
 
-    if (showOptionsDialog.value) {
-        ReminderOptionsDialog(onDismiss = { showOptionsDialog.value = false })
+    if (showOptionsDialog) {
+        ReminderOptionsDialog(
+            onDismiss = { setShowOptionsDialog(false) },
+            viewModel = viewModel
+        )
     }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ReminderOptionsDialog(onDismiss: () -> Unit) {
+fun ReminderOptionsDialog(onDismiss: () -> Unit, viewModel: TrainFactsViewModel) {
     val context = LocalContext.current
     val haptic = LocalHapticFeedback.current
-    val isEnabled = remember { mutableStateOf(ReminderManager.isReminderEnabled(context)) }
+    
+    val isEnabled by viewModel.isReminderEnabled
+    val time by viewModel.reminderTime
+    val isPermissionGranted by viewModel.isNotificationPermissionGranted
 
-    val initialTime = remember { ReminderManager.getReminderTime(context) }
-    var selectedHour by remember { mutableIntStateOf(initialTime.first) }
-    var selectedMinute by remember { mutableIntStateOf(initialTime.second) }
-
-    val showTimePicker = remember { mutableStateOf(false) }
+    val (showTimePicker, setShowTimePicker) = remember { mutableStateOf(false) }
     val timePickerState = rememberTimePickerState(
-        initialHour = selectedHour,
-        initialMinute = selectedMinute,
+        initialHour = time.first,
+        initialMinute = time.second,
         is24Hour = true
     )
 
     val permissionLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestPermission()
     ) { isGranted ->
+        viewModel.setNotificationPermissionGranted(isGranted)
         if (isGranted) {
-            ReminderManager.setReminder(context, true, selectedHour, selectedMinute)
-            isEnabled.value = true
+            viewModel.toggleReminder(context, true)
         } else {
             Toast.makeText(context, "Notification permission required for reminders", Toast.LENGTH_LONG).show()
         }
     }
 
-    if (showTimePicker.value) {
+    if (showTimePicker) {
         TimePickerDialog(
-            onDismissRequest = { showTimePicker.value = false },
+            onDismissRequest = { setShowTimePicker(false) },
             confirmButton = {
                 TextButton(
                     onClick = {
                         haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                        selectedHour = timePickerState.hour
-                        selectedMinute = timePickerState.minute
-                        if (isEnabled.value) {
-                            ReminderManager.setReminder(context, true, selectedHour, selectedMinute)
-                        }
-                        showTimePicker.value = false
+                        viewModel.updateReminderTime(context, timePickerState.hour, timePickerState.minute)
+                        setShowTimePicker(false)
                     }
                 ) { Text("OK") }
             },
             dismissButton = {
                 TextButton(
-                    onClick = { showTimePicker.value = false }
+                    onClick = { setShowTimePicker(false) }
                 ) { Text("Cancel") }
             }
         ) {
@@ -388,24 +397,17 @@ fun ReminderOptionsDialog(onDismiss: () -> Unit) {
                 ) {
                     Text("Enable Reminders", modifier = Modifier.weight(1f))
                     Switch(
-                        checked = isEnabled.value,
+                        checked = isEnabled,
                         onCheckedChange = { checked ->
                             haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                             if (checked) {
-                                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                                    if (ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED) {
-                                        ReminderManager.setReminder(context, true, selectedHour, selectedMinute)
-                                        isEnabled.value = true
-                                    } else {
-                                        permissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
-                                    }
+                                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU && !isPermissionGranted) {
+                                    permissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
                                 } else {
-                                    ReminderManager.setReminder(context, true, selectedHour, selectedMinute)
-                                    isEnabled.value = true
+                                    viewModel.toggleReminder(context, true)
                                 }
                             } else {
-                                ReminderManager.setReminder(context, false, selectedHour, selectedMinute)
-                                isEnabled.value = false
+                                viewModel.toggleReminder(context, false)
                             }
                         }
                     )
@@ -416,11 +418,11 @@ fun ReminderOptionsDialog(onDismiss: () -> Unit) {
                 TextButton(
                     onClick = { 
                         haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                        showTimePicker.value = true 
+                        setShowTimePicker(true)
                     },
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    Text("Reminder Time: ${String.format(Locale.getDefault(), "%02d:%02d", selectedHour, selectedMinute)}")
+                    Text("Reminder Time: ${String.format(Locale.getDefault(), "%02d:%02d", time.first, time.second)}")
                 }
             }
         },
