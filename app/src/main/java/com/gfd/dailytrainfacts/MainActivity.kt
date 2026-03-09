@@ -174,8 +174,8 @@ fun FactScreen(
     val context = LocalContext.current
     val haptic = LocalHapticFeedback.current
 
-    val showMenu = remember { mutableStateOf(false) }
-    val showOptionsDialog = remember { mutableStateOf(false) }
+    val (showMenu, setShowMenu) = remember { mutableStateOf(false) }
+    val (showOptionsDialog, setShowOptionsDialog) = remember { mutableStateOf(false) }
     
     var isFavorite by remember { mutableStateOf(FavoritesManager.isFavorite(context, fact)) }
 
@@ -307,20 +307,20 @@ fun FactScreen(
         }
 
         IconButton(
-            onClick = { showMenu.value = true },
+            onClick = { setShowMenu(true) },
             modifier = Modifier
                 .align(Alignment.TopStart)
                 .padding(top = 48.dp, start = 16.dp)
         ) {
             Icon(Icons.Default.Menu, contentDescription = "Menu")
             DropdownMenu(
-                expanded = showMenu.value,
-                onDismissRequest = { showMenu.value = false }
+                expanded = showMenu,
+                onDismissRequest = { setShowMenu(false) }
             ) {
                 DropdownMenuItem(
                     text = { Text("Favorite Facts") },
                     onClick = {
-                        showMenu.value = false
+                        setShowMenu(false)
                         onNavigateToFavorites()
                     },
                     leadingIcon = { Icon(Icons.Default.Favorite, contentDescription = null) }
@@ -328,8 +328,8 @@ fun FactScreen(
                 DropdownMenuItem(
                     text = { Text("Reminder Settings") },
                     onClick = {
-                        showMenu.value = false
-                        showOptionsDialog.value = true
+                        setShowMenu(false)
+                        setShowOptionsDialog(true)
                     },
                     leadingIcon = { Icon(Icons.Default.Notifications, contentDescription = null) }
                 )
@@ -337,9 +337,9 @@ fun FactScreen(
         }
     }
 
-    if (showOptionsDialog.value) {
+    if (showOptionsDialog) {
         ReminderOptionsDialog(
-            onDismiss = { showOptionsDialog.value = false },
+            onDismiss = { setShowOptionsDialog(false) },
             viewModel = viewModel
         )
     }
@@ -355,7 +355,7 @@ fun ReminderOptionsDialog(onDismiss: () -> Unit, viewModel: TrainFactsViewModel)
     val time by viewModel.reminderTime
     val isPermissionGranted by viewModel.isNotificationPermissionGranted
 
-    val showTimePicker = remember { mutableStateOf(false) }
+    val (showTimePicker, setShowTimePicker) = remember { mutableStateOf(false) }
 
     val permissionLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestPermission()
@@ -368,26 +368,26 @@ fun ReminderOptionsDialog(onDismiss: () -> Unit, viewModel: TrainFactsViewModel)
         }
     }
 
-    if (showTimePicker.value) {
+    if (showTimePicker) {
         val timePickerState = rememberTimePickerState(
             initialHour = time.first,
             initialMinute = time.second,
             is24Hour = true
         )
         TimePickerDialog(
-            onDismissRequest = { showTimePicker.value = false },
+            onDismissRequest = { setShowTimePicker(false) },
             confirmButton = {
                 TextButton(
                     onClick = {
                         haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                         viewModel.updateReminderTime(context, timePickerState.hour, timePickerState.minute)
-                        showTimePicker.value = false
+                        setShowTimePicker(false)
                     }
                 ) { Text("OK") }
             },
             dismissButton = {
                 TextButton(
-                    onClick = { showTimePicker.value = false }
+                    onClick = { setShowTimePicker(false) }
                 ) { Text("Cancel") }
             }
         ) {
@@ -427,7 +427,7 @@ fun ReminderOptionsDialog(onDismiss: () -> Unit, viewModel: TrainFactsViewModel)
                 TextButton(
                     onClick = { 
                         haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                        showTimePicker.value = true
+                        setShowTimePicker(true)
                     },
                     modifier = Modifier.fillMaxWidth()
                 ) {
@@ -452,6 +452,8 @@ fun FavoritesScreen(onBackClicked: () -> Unit) {
     val context = LocalContext.current
     val haptic = LocalHapticFeedback.current
     val favorites = remember { mutableStateListOf<String>().apply { addAll(FavoritesManager.getFavorites(context)) } }
+    
+    val (factToRemove, setFactToRemove) = remember { mutableStateOf<String?>(null) }
 
     Scaffold(
         topBar = {
@@ -494,8 +496,7 @@ fun FavoritesScreen(onBackClicked: () -> Unit) {
                             )
                             IconButton(onClick = {
                                 haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                                FavoritesManager.toggleFavorite(context, fact)
-                                favorites.remove(fact)
+                                setFactToRemove(fact)
                             }) {
                                 Icon(Icons.Default.Favorite, contentDescription = "Remove from favorites", tint = Color.Red)
                             }
@@ -504,6 +505,34 @@ fun FavoritesScreen(onBackClicked: () -> Unit) {
                 }
             }
         }
+    }
+
+    // Confirmation Dialog for removal
+    if (factToRemove != null) {
+        AlertDialog(
+            onDismissRequest = { setFactToRemove(null) },
+            title = { Text("Remove from Favorites?") },
+            text = { Text("Are you sure you want to remove this fact from your favorites list?") },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        factToRemove.let { fact ->
+                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                            FavoritesManager.toggleFavorite(context, fact)
+                            favorites.remove(fact)
+                        }
+                        setFactToRemove(null)
+                    }
+                ) {
+                    Text("Remove", color = Color.Red)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { setFactToRemove(null) }) {
+                    Text("Cancel")
+                }
+            }
+        )
     }
 }
 

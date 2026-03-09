@@ -70,4 +70,31 @@ class MainActivityTest {
         // Should be back to Add to Favorites
         composeTestRule.onNodeWithText("Add to Favorites", substring = true).assertExists()
     }
+    
+    @Test
+    fun favoritesScreen_showsConfirmationDialog_onRemove() {
+        val fact = "This is a test fact."
+        // First, add a fact to be removed
+        composeTestRule.onNodeWithText("Give Me a Train Fact").performClick()
+        composeTestRule.onNodeWithText("Add to Favorites", substring = true).performClick()
+        composeTestRule.onNodeWithContentDescription("Menu").performClick()
+        composeTestRule.onNodeWithText("Favorite Facts").performClick()
+
+        // Now on favorites, click the remove icon
+        composeTestRule.onNodeWithContentDescription("Remove from favorites").performClick()
+
+        // Verify dialog is shown
+        composeTestRule.onNodeWithText("Remove from Favorites?").assertIsDisplayed()
+
+        // Click Cancel and verify fact is still there
+        composeTestRule.onNodeWithText("Cancel").performClick()
+        composeTestRule.onNodeWithText(fact, substring = true).assertExists()
+
+        // Re-open and confirm removal
+        composeTestRule.onNodeWithContentDescription("Remove from favorites").performClick()
+        composeTestRule.onNodeWithText("Remove").performClick()
+
+        // Verify the fact is gone
+        composeTestRule.onNodeWithText(fact, substring = true).assertDoesNotExist()
+    }
 }
