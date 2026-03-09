@@ -1,18 +1,17 @@
 package com.gfd.dailytrainfacts
 
-import android.app.AlarmManager
-import android.app.PendingIntent
 import android.content.Context
-import android.content.Intent
-import android.os.Build
 import androidx.core.content.edit
+import androidx.work.*
 import java.util.*
+import java.util.concurrent.TimeUnit
 
 object ReminderManager {
     private const val PREFS_NAME = "reminder_prefs"
     private const val KEY_ENABLED = "reminder_enabled"
     private const val KEY_HOUR = "reminder_hour"
     private const val KEY_MINUTE = "reminder_minute"
+    private const val WORK_TAG = "daily_train_fact_reminder"
 
     fun setReminder(context: Context, enabled: Boolean, hour: Int, minute: Int) {
         val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
@@ -23,9 +22,9 @@ object ReminderManager {
         }
 
         if (enabled) {
-            scheduleAlarm(context, hour, minute)
+            scheduleWork(context, hour, minute)
         } else {
-            cancelAlarm(context)
+            cancelWork(context)
         }
     }
 
@@ -42,36 +41,25 @@ object ReminderManager {
     fun rescheduleReminder(context: Context) {
         if (isReminderEnabled(context)) {
             val (hour, minute) = getReminderTime(context)
-            scheduleAlarm(context, hour, minute)
+            scheduleWork(context, hour, minute)
         }
     }
 
-    private fun scheduleAlarm(context: Context, hour: Int, minute: Int) {
-        val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
+    private fun scheduleWork(context: Context, hour: Int, minute: Int) {
+        val workManager = WorkManager.getInstance(context)
         
-        val intent = Intent(context, ReminderReceiver::class.java)
-        val pendingIntent = PendingIntent.getBroadcast(
-            context, 0, intent,
-            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        val initialDelay = calculateNextOccurrence(System.currentTimeMillis(), hour, minute) - System.currentTimeMillis()
+        
+        val workRequest = OneTimeWorkRequestBuilder<ReminderWorker>()
+            .setInitialDelay(initialDelay, TimeUnit.MILLISECONDS)
+            .addTag(WORK_TAG)
+            .build()
+
+        workManager.enqueueUniqueWork(
+            WORK_TAG,
+            ExistingWorkPolicy.REPLACE,
+            workRequest
         )
-
-        val triggerTime = calculateNextOccurrence(System.currentTimeMillis(), hour, minute)
-
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && !alarmManager.canScheduleExactAlarms()) {
-            // Fallback to non-exact alarm if exact alarm permission is not granted
-            alarmManager.setAndAllowWhileIdle(
-                AlarmManager.RTC_WAKEUP,
-                triggerTime,
-                pendingIntent
-            )
-        } else {
-            // Use exact alarm
-            alarmManager.setExactAndAllowWhileIdle(
-                AlarmManager.RTC_WAKEUP,
-                triggerTime,
-                pendingIntent
-            )
-        }
     }
 
     internal fun calculateNextOccurrence(now: Long, hour: Int, minute: Int): Long {
@@ -82,7 +70,6 @@ object ReminderManager {
             set(Calendar.SECOND, 0)
             set(Calendar.MILLISECOND, 0)
             
-            // If the calculated time is already in the past relative to 'now', schedule for tomorrow
             if (timeInMillis <= now) {
                 add(Calendar.DAY_OF_YEAR, 1)
             }
@@ -90,13 +77,7 @@ object ReminderManager {
         return calendar.timeInMillis
     }
 
-    private fun cancelAlarm(context: Context) {
-        val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
-        val intent = Intent(context, ReminderReceiver::class.java)
-        val pendingIntent = PendingIntent.getBroadcast(
-            context, 0, intent,
-            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-        )
-        alarmManager.cancel(pendingIntent)
+    private fun cancelWork(context: Context) {
+        WorkManager.getInstance(context).cancelAllWorkByTag(WORK_TAG)
     }
 }
