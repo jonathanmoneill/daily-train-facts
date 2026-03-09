@@ -15,7 +15,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
-import java.util.Calendar
 
 class TrainFactsViewModel(private val repository: FactRepository) : ViewModel() {
     private val _currentScreen = mutableStateOf(Screen.Home)
@@ -55,20 +54,7 @@ class TrainFactsViewModel(private val repository: FactRepository) : ViewModel() 
     }
 
     private suspend fun loadTodayFact() {
-        val count = repository.getFactCount()
-        if (count > 0) {
-            val daysSinceEpoch = calculateDaysSinceEpoch()
-            val index = (daysSinceEpoch % count).toInt()
-            _currentFact.value = repository.getFactAtIndex(index)
-        }
-    }
-
-    private fun calculateDaysSinceEpoch(): Long {
-        val now = System.currentTimeMillis()
-        val calendar = Calendar.getInstance()
-        calendar.timeInMillis = now
-        val localTimeInMillis = now + calendar.timeZone.getOffset(now)
-        return localTimeInMillis / (24 * 60 * 60 * 1000)
+        _currentFact.value = repository.getTodayFact()
     }
 
     fun toggleFavorite(fact: Fact) {

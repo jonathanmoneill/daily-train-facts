@@ -14,26 +14,15 @@ import androidx.glance.layout.*
 import androidx.glance.text.FontWeight
 import androidx.glance.text.Text
 import androidx.glance.text.TextStyle
-import java.util.Calendar
 
 class DailyTrainFactWidget : GlanceAppWidget() {
 
     override suspend fun provideGlance(context: Context, id: GlanceId) {
         val app = context.applicationContext as DailyTrainFactsApplication
         val repository = app.repository
-        val count = repository.getFactCount()
         
-        val factText = if (count > 0) {
-            val now = System.currentTimeMillis()
-            val calendar = Calendar.getInstance()
-            calendar.timeInMillis = now
-            val localTimeInMillis = now + calendar.timeZone.getOffset(now)
-            val daysSinceEpoch = localTimeInMillis / (24 * 60 * 60 * 1000)
-            val index = (daysSinceEpoch % count).toInt()
-            repository.getFactAtIndex(index)?.text ?: TrainFactsProvider.getFactForToday()
-        } else {
-            TrainFactsProvider.getFactForToday()
-        }
+        val fact = repository.getTodayFact()
+        val factText = fact?.text ?: "Open the app to see today's train fact!"
 
         provideContent {
             GlanceTheme {

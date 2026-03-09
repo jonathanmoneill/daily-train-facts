@@ -9,7 +9,6 @@ import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.*
 import org.junit.After
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertNotNull
 import org.junit.Before
 import org.junit.Test
 import org.mockito.kotlin.*
@@ -26,8 +25,8 @@ class TrainFactsViewModelTest {
     fun setup() {
         Dispatchers.setMain(testDispatcher)
 
-        val emptyFlow = flowOf(emptyList<Fact>())
-        assertNotNull(doReturn(emptyFlow).whenever(repository).getFavoriteFacts())
+        val initialFlow = flowOf(emptyList<Fact>())
+        whenever(repository.getFavoriteFacts()).thenReturn(initialFlow)
         
         viewModel = TrainFactsViewModel(repository)
     }
@@ -60,15 +59,14 @@ class TrainFactsViewModelTest {
         val favoriteFacts = listOf(Fact(text = "Favorite 1", isFavorite = true))
         val favoritesFlow = flowOf(favoriteFacts)
         
-        assertNotNull(doReturn(favoritesFlow).whenever(repository).getFavoriteFacts())
-        whenever(repository.getFactCount()).thenReturn(10)
-        whenever(repository.getFactAtIndex(any())).thenReturn(Fact(text = "Daily Fact"))
+        whenever(repository.getFavoriteFacts()).thenReturn(favoritesFlow)
+        whenever(repository.getTodayFact()).thenReturn(Fact(text = "Daily Fact"))
 
         viewModel.init(context)
         advanceUntilIdle()
 
         verify(repository).initializeDatabaseIfNeeded()
-        assertNotNull(verify(repository).getFavoriteFacts())
+        // Check that the favorites state was actually updated by the flow
         assertEquals(favoriteFacts, viewModel.favoriteFacts.value)
         assertEquals("Daily Fact", viewModel.currentFact.value?.text)
     }

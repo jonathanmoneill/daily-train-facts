@@ -8,5 +8,7 @@ data class Fact(
     @PrimaryKey(autoGenerate = true)
     val id: Int = 0,
     val text: String,
-    val isFavorite: Boolean = false
+    val isFavorite: Boolean = false,
+    val isShown: Boolean = false,
+    val lastShownDate: Long? = null
 )

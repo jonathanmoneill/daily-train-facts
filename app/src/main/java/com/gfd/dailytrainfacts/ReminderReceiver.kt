@@ -8,6 +8,9 @@ import android.content.Context
 import android.content.Intent
 import android.os.Build
 import androidx.core.app.NotificationCompat
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 class ReminderReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
@@ -17,10 +20,18 @@ class ReminderReceiver : BroadcastReceiver() {
             return
         }
 
-        showNotification(context)
+        // Use a coroutine scope to call the suspend function
+        val app = context.applicationContext as DailyTrainFactsApplication
+        val repository = app.repository
+        
+        CoroutineScope(Dispatchers.IO).launch {
+            val fact = repository.getTodayFact()
+            val factText = fact?.text ?: "Open the app to see today's train fact!"
+            showNotification(context, factText)
+        }
     }
 
-    private fun showNotification(context: Context) {
+    private fun showNotification(context: Context, factText: String) {
         val channelId = "daily_train_fact_reminder"
         val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
 
@@ -41,13 +52,11 @@ class ReminderReceiver : BroadcastReceiver() {
             PendingIntent.FLAG_IMMUTABLE
         )
 
-        val fact = TrainFactsProvider.getFactForToday()
-
         val notification = NotificationCompat.Builder(context, channelId)
-            .setSmallIcon(R.mipmap.ic_launcher) // Use app icon
+            .setSmallIcon(R.mipmap.ic_launcher)
             .setContentTitle("Your Daily Train Fact")
-            .setContentText(fact)
-            .setStyle(NotificationCompat.BigTextStyle().bigText(fact))
+            .setContentText(factText)
+            .setStyle(NotificationCompat.BigTextStyle().bigText(factText))
             .setPriority(NotificationCompat.PRIORITY_DEFAULT)
             .setContentIntent(pendingIntent)
             .setAutoCancel(true)

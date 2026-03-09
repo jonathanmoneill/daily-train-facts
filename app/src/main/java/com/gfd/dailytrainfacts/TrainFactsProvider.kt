@@ -1,10 +1,7 @@
 package com.gfd.dailytrainfacts
 
-import java.util.Calendar
-import java.util.Random
-
 object TrainFactsProvider {
-    internal val rawFacts = listOf(
+    val facts = listOf(
         "The first steam locomotive was built by Richard Trevithick in 1804.",
         "The fastest operational train in the world is the Shanghai Maglev, reaching 267 mph.",
         "The Trans-Siberian Railway is the longest railway line in the world.",
@@ -84,7 +81,7 @@ object TrainFactsProvider {
         "The 'Caledonian Sleeper' runs from London to various destinations in Scotland.",
         "The Bluebell Railway was the first preserved standard-gauge heritage line in the UK.",
         "The Talyllyn Railway was the first railway in the world to be preserved by volunteers.",
-        "The Keighley \u0026 Worth Valley Railway was a filming location for 'The Railway Children'.",
+        "The Keighley & Worth Valley Railway was a filming location for 'The Railway Children'.",
         "London Victoria station serves over 70 million passengers a year.",
         "The Severn Valley Railway is one of the most popular heritage lines in the UK.",
         "Waterloo Station has the largest number of platforms in the UK (24).",
@@ -96,7 +93,7 @@ object TrainFactsProvider {
         "The 'Brighton Belle' was the world's first all-electric Pullman train.",
         "The Isle of Wight Steam Railway uses vintage locomotives and carriages.",
         "The 'Golden Arrow' was a luxury boat train that linked London and Paris.",
-        "The Romney, Hythe \u0026 Dymchurch Railway is a famous 15-inch gauge line.",
+        "The Romney, Hythe & Dymchurch Railway is a famous 15-inch gauge line.",
         "The 'Master Cutler' is a named express train running between London and Sheffield.",
         "The 'Flying Scotsman' service has run between London and Edinburgh since 1862.",
         "The Ravenglass and Eskdale Railway is one of the oldest and longest narrow-gauge lines.",
@@ -125,7 +122,7 @@ object TrainFactsProvider {
         "The first railway in Belgium was the Brussels-Mechelen line, opened in 1835.",
         "The 'Docklands Light Railway' (DLR) is an automated system in East London.",
         "The first railway in Switzerland was the Zurich-Baden line, opened in 1847.",
-        "The 'Tyne \u0026 Wear Metro' serves Newcastle upon Tyne and surrounding areas.",
+        "The 'Tyne & Wear Metro' serves Newcastle upon Tyne and surrounding areas.",
         "The first railway in Austria was the Floridsdorf-Wagram line, opened in 1837.",
         "The 'Glasgow Subway' is the third oldest underground system in the world.",
         "The first railway in Portugal was the Lisbon-Carregado line, opened in 1856.",
@@ -161,7 +158,7 @@ object TrainFactsProvider {
         "The 'Douglas Bay Horse Tramway' is one of the last remaining of its kind.",
         "The 'Volk's Electric Railway' in Brighton is the oldest electric railway in the world.",
         "The 'Hythe Pier Railway' is the oldest continuously operating pier railway.",
-        "The 'Lynton \u0026 Lynmouth Cliff Railway' is water-powered.",
+        "The 'Lynton & Lynmouth Cliff Railway' is water-powered.",
         "The first railway in South Africa was the Durban-Point line, opened in 1860.",
         "The 'Babbacombe Cliff Railway' in Devon is another famous funicular.",
         "The 'South Cliff Lift' in Scarborough was the first funicular in the UK.",
@@ -176,13 +173,13 @@ object TrainFactsProvider {
         "The 'Edinburgh Trams' returned to the city streets in 2014.",
         "The 'Manchester Metrolink' is the largest light rail system in the UK.",
         "The 'Sheffield Supertram' features a unique design.",
-        "The 'Grand Junction Railway' once linked Birmingham to the Liverpool \u0026 Manchester Railway.",
+        "The 'Grand Junction Railway' once linked Birmingham to the Liverpool & Manchester Railway.",
         "The 'London and North Western Railway' was once the largest joint-stock company in the world.",
         "The 'Midland Railway' had its headquarters in Derby, near Nottingham.",
         "The 'North Eastern Railway' had the largest collection of steam locomotives in the UK.",
-        "The 'Great South \u0026 West Railway' was the largest railway in Ireland.",
-        "The 'Somerset \u0026 Dorset Joint Railway' was famously known as the 'Slow and Dirty'.",
-        "The 'Lancashire \u0026 Yorkshire Railway' had a very dense network of lines.",
+        "The 'Great South & West Railway' was the largest railway in Ireland.",
+        "The 'Somerset & Dorset Joint Railway' was famously known as the 'Slow and Dirty'.",
+        "The 'Lancashire & Yorkshire Railway' had a very dense network of lines.",
         "The 'London, Brighton and South Coast Railway' was famous for its elegant locomotives.",
         "The 'Great North of Scotland Railway' served the north-east of the country.",
         "The 'Highland Railway' struggled with steep gradients and snowy weather.",
@@ -190,27 +187,27 @@ object TrainFactsProvider {
         "The 'Rhymney Railway' was a key coal-carrying line in South Wales.",
         "The 'Taff Vale Railway' was a major coal-carrying line.",
         "The 'Barry Railway' built its own dock to compete with Cardiff.",
-        "The 'Maryport \u0026 Carlisle Railway' was a small but profitable line.",
+        "The 'Maryport & Carlisle Railway' was a small but profitable line.",
         "The 'North Staffordshire Railway' was known as the 'Knotty'.",
-        "The 'Hull \u0026 Barnsley Railway' was built to break the monopoly of the NER.",
-        "The 'Stratford-upon-Avon \u0026 Midland Junction Railway' was formed from several small lines.",
+        "The 'Hull & Barnsley Railway' was built to break the monopoly of the NER.",
+        "The 'Stratford-upon-Avon & Midland Junction Railway' was formed from several small lines.",
         "The 'Isle of Wight Railway' served the eastern part of the island.",
         "The 'Midland Great Western Railway' was the third largest in Ireland.",
-        "The 'Dublin \u0026 South Eastern Railway' was known for its scenic coastal line.",
+        "The 'Dublin & South Eastern Railway' was known for its scenic coastal line.",
         "The 'Clogher Valley Railway' was a famous Irish narrow-gauge line.",
-        "The 'Listowel \u0026 Ballybunion Railway' was a unique Lartigue monorail.",
-        "The 'Schull \u0026 Skibbereen Railway' was a notable Irish narrow-gauge line.",
-        "The 'Tralee \u0026 Dingle Light Railway' was the westernmost railway in Europe.",
+        "The 'Listowel & Ballybunion Railway' was a unique Lartigue monorail.",
+        "The 'Schull & Skibbereen Railway' was a notable Irish narrow-gauge line.",
+        "The 'Tralee & Dingle Light Railway' was the westernmost railway in Europe.",
         "The 'County Donegal Railways' had the largest narrow-gauge system in Ireland.",
-        "The 'London \u0026 Greenwich Railway' was the first to be built on a brick viaduct.",
-        "The 'London \u0026 Blackwall Railway' originally used cable haulage.",
+        "The 'London & Greenwich Railway' was the first to be built on a brick viaduct.",
+        "The 'London & Blackwall Railway' originally used cable haulage.",
         "The 'Eastern Counties Railway' was notorious for its poor service.",
-        "The 'South Eastern \u0026 Chatham Railway' was a working union of two rivals.",
+        "The 'South Eastern & Chatham Railway' was a working union of two rivals.",
         "The 'Great Central' motto was 'Forward'.",
         "The 'Great Western' motto was 'Domine Dirige Nos'.",
         "The 'Southern' motto was 'Semper Sursum'.",
-        "The 'London Midland \u0026 Scottish' was formed during the 1923 grouping.",
-        "The 'London \u0026 North Eastern' was another of the 'Big Four' companies.",
+        "The 'London Midland & Scottish' was formed during the 1923 grouping.",
+        "The 'London & North Eastern' was another of the 'Big Four' companies.",
         "The 'Southern Railway' was the smallest of the Big Four.",
         "The 'Great Western Railway' was the only one to keep its name in 1923.",
         "'British Railways' was formed by nationalisation in 1948.",
@@ -230,7 +227,7 @@ object TrainFactsProvider {
         "The first railway in Christmas Island was a phosphate railway.",
         "The 'London Underground' has 11 lines and 272 stations.",
         "The 'Glasgow Subway' is known affectionately as the 'Clockwork Orange'.",
-        "The 'Tyne \u0026 Wear Metro' uses a unique mix of heavy and light rail technology.",
+        "The 'Tyne & Wear Metro' uses a unique mix of heavy and light rail technology.",
         "The 'Docklands Light Railway' was originally built using existing railway infrastructure.",
         "The first railroad in the US was the Baltimore and Ohio Railroad.",
         "The 'Humber Bridge' was never designed to carry a railway.",
@@ -372,21 +369,4 @@ object TrainFactsProvider {
         "A 'slug' is a locomotive that has no engine. It consists only of wheels and motors. It is permanently cabled to a 'mother' locomotive, using the mother's excess electricity to provide extra pulling power at very low speeds in freight yards.",
         "In 1910, inventor Louis Brennan debuted a train that ran on a single rail and stayed upright using massive internal gyroscopes. It could lean into corners like a motorcycle and even carry passengers, including Winston Churchill."
     )
-
-    internal val facts = rawFacts.shuffled(Random(42))
-
-    fun getFactForToday(): String {
-        return getFactForTime(System.currentTimeMillis())
-    }
-
-    internal fun getFactForTime(timeInMillis: Long): String {
-        val calendar = Calendar.getInstance()
-        calendar.timeInMillis = timeInMillis
-        // Adjust for local timezone offset to ensure'00:00 local device time'
-        val localTimeInMillis = timeInMillis + calendar.timeZone.getOffset(timeInMillis)
-        val daysSinceEpoch = localTimeInMillis / (24 * 60 * 60 * 1000)
-        
-        val index = (daysSinceEpoch % facts.size).toInt()
-        return facts[index]
-    }
 }

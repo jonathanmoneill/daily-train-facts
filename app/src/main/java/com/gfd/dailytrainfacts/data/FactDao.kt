@@ -14,9 +14,6 @@ interface FactDao {
     @Query("SELECT COUNT(*) FROM facts")
     suspend fun getFactCount(): Int
 
-    @Query("SELECT * FROM facts LIMIT 1 OFFSET :index")
-    suspend fun getFactAtIndex(index: Int): Fact?
-
     @Query("SELECT * FROM facts WHERE text = :text LIMIT 1")
     suspend fun getFactByText(text: String): Fact?
 
@@ -25,4 +22,13 @@ interface FactDao {
 
     @Query("SELECT * FROM facts WHERE isFavorite = 1")
     fun getFavoriteFacts(): Flow<List<Fact>>
+
+    @Query("SELECT * FROM facts WHERE lastShownDate = :today LIMIT 1")
+    suspend fun getFactForToday(today: Long): Fact?
+
+    @Query("SELECT * FROM facts WHERE isShown = 0 ORDER BY RANDOM() LIMIT 1")
+    suspend fun getRandomUnshownFact(): Fact?
+
+    @Query("UPDATE facts SET isShown = 0")
+    suspend fun resetShownStatus()
 }
