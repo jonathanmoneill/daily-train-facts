@@ -185,7 +185,7 @@ fun HomeScreen(onGiveMeFactClicked: () -> Unit) {
             fontWeight = FontWeight.Bold,
             modifier = Modifier
                 .align(Alignment.BottomCenter)
-                .padding(bottom = 64.dp)
+                .padding(bottom = 48.dp)
         )
     }
 }
