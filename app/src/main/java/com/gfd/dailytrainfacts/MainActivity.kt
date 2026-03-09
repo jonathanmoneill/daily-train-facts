@@ -41,6 +41,9 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.lifecycle.viewmodel.initializer
+import androidx.lifecycle.viewmodel.viewModelFactory
+import com.gfd.dailytrainfacts.data.Fact
 import com.gfd.dailytrainfacts.ui.theme.DailyTrainFactsTheme
 import java.text.SimpleDateFormat
 import java.util.*
@@ -51,7 +54,14 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             DailyTrainFactsTheme {
-                val viewModel: TrainFactsViewModel = viewModel()
+                val app = LocalContext.current.applicationContext as DailyTrainFactsApplication
+                val viewModel: TrainFactsViewModel = viewModel(
+                    factory = viewModelFactory {
+                        initializer {
+                            TrainFactsViewModel(app.repository)
+                        }
+                    }
+                )
                 val context = LocalContext.current
                 
                 LaunchedEffect(Unit) {
@@ -87,7 +97,10 @@ fun TrainFactsApp(viewModel: TrainFactsViewModel) {
                     onNavigateToFavorites = { viewModel.navigateTo(Screen.Favorites) },
                     viewModel = viewModel
                 )
-                Screen.Favorites -> FavoritesScreen(onBackClicked = { viewModel.navigateTo(Screen.Fact) })
+                Screen.Favorites -> FavoritesScreen(
+                    onBackClicked = { viewModel.navigateTo(Screen.Fact) },
+                    viewModel = viewModel
+                )
             }
         }
     }
@@ -170,15 +183,15 @@ fun FactScreen(
     val calendar = Calendar.getInstance()
     val dateFormat = SimpleDateFormat("EEEE, MMMM d, yyyy", Locale.getDefault())
     val currentDate = dateFormat.format(calendar.time)
-    val fact = TrainFactsProvider.getFactForToday()
+    
+    val currentFact by viewModel.currentFact.collectAsState()
+    
     val context = LocalContext.current
     val haptic = LocalHapticFeedback.current
 
     val (showMenu, setShowMenu) = remember { mutableStateOf(false) }
     val (showOptionsDialog, setShowOptionsDialog) = remember { mutableStateOf(false) }
     
-    var isFavorite by remember { mutableStateOf(FavoritesManager.isFavorite(context, fact)) }
-
     Box(modifier = Modifier.fillMaxSize()) {
         Column(
             modifier = Modifier
@@ -221,7 +234,7 @@ fun FactScreen(
                     Box(modifier = Modifier.fillMaxWidth()) {
                         SelectionContainer {
                             Text(
-                                text = fact,
+                                text = currentFact?.text ?: "Loading...",
                                 style = MaterialTheme.typography.headlineMedium,
                                 textAlign = TextAlign.Center,
                                 modifier = Modifier.padding(24.dp),
@@ -237,14 +250,15 @@ fun FactScreen(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
+                    val isFavorite = currentFact?.isFavorite ?: false
                     FilledTonalButton(
                         onClick = {
                             haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                            FavoritesManager.toggleFavorite(context, fact)
-                            isFavorite = !isFavorite
+                            currentFact?.let { viewModel.toggleFavorite(it) }
                         },
                         modifier = Modifier.weight(1f),
-                        shape = RoundedCornerShape(8.dp)
+                        shape = RoundedCornerShape(8.dp),
+                        enabled = currentFact != null
                     ) {
                         Text(if (isFavorite) "In Favorites" else "Add to Favorites", fontSize = 12.sp)
                         Spacer(Modifier.size(ButtonDefaults.IconSpacing))
@@ -259,16 +273,19 @@ fun FactScreen(
                     FilledTonalButton(
                         onClick = {
                             haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                            val sendIntent: Intent = Intent().apply {
-                                action = Intent.ACTION_SEND
-                                putExtra(Intent.EXTRA_TEXT, "Did you know? $fact #DailyTrainFacts")
-                                type = "text/plain"
+                            currentFact?.let {
+                                val sendIntent: Intent = Intent().apply {
+                                    action = Intent.ACTION_SEND
+                                    putExtra(Intent.EXTRA_TEXT, "Did you know? ${it.text} #DailyTrainFacts")
+                                    type = "text/plain"
+                                }
+                                val shareIntent = Intent.createChooser(sendIntent, null)
+                                context.startActivity(shareIntent)
                             }
-                            val shareIntent = Intent.createChooser(sendIntent, null)
-                            context.startActivity(shareIntent)
                         },
                         modifier = Modifier.weight(1f),
-                        shape = RoundedCornerShape(8.dp)
+                        shape = RoundedCornerShape(8.dp),
+                        enabled = currentFact != null
                     ) {
                         Icon(
                             imageVector = Icons.Default.Share,
@@ -448,12 +465,11 @@ fun ReminderOptionsDialog(onDismiss: () -> Unit, viewModel: TrainFactsViewModel)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun FavoritesScreen(onBackClicked: () -> Unit) {
-    val context = LocalContext.current
+fun FavoritesScreen(onBackClicked: () -> Unit, viewModel: TrainFactsViewModel) {
     val haptic = LocalHapticFeedback.current
-    val favorites = remember { mutableStateListOf<String>().apply { addAll(FavoritesManager.getFavorites(context)) } }
+    val favorites by viewModel.favoriteFacts.collectAsState()
     
-    val (factToRemove, setFactToRemove) = remember { mutableStateOf<String?>(null) }
+    val (factToRemove, setFactToRemove) = remember { mutableStateOf<Fact?>(null) }
 
     Scaffold(
         topBar = {
@@ -490,7 +506,7 @@ fun FavoritesScreen(onBackClicked: () -> Unit) {
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Text(
-                                text = fact,
+                                text = fact.text,
                                 style = MaterialTheme.typography.bodyLarge,
                                 modifier = Modifier.weight(1f)
                             )
@@ -518,8 +534,7 @@ fun FavoritesScreen(onBackClicked: () -> Unit) {
                     onClick = {
                         factToRemove.let { fact ->
                             haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                            FavoritesManager.toggleFavorite(context, fact)
-                            favorites.remove(fact)
+                            viewModel.toggleFavorite(fact)
                         }
                         setFactToRemove(null)
                     }
