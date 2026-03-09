@@ -40,6 +40,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
@@ -63,7 +65,21 @@ class MainActivity : ComponentActivity() {
                     }
                 )
                 val context = LocalContext.current
-                
+                val lifecycleOwner = androidx.lifecycle.compose.LocalLifecycleOwner.current
+
+                // Re-check permissions when app returns to foreground
+                DisposableEffect(lifecycleOwner) {
+                    val observer = LifecycleEventObserver { _, event ->
+                        if (event == Lifecycle.Event.ON_RESUME) {
+                            viewModel.checkNotificationPermission(context)
+                        }
+                    }
+                    lifecycleOwner.lifecycle.addObserver(observer)
+                    onDispose {
+                        lifecycleOwner.lifecycle.removeObserver(observer)
+                    }
+                }
+
                 LaunchedEffect(Unit) {
                     viewModel.init(context)
                 }
