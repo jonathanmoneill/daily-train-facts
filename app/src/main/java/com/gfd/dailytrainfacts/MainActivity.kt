@@ -16,8 +16,10 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.selection.SelectionContainer
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.*
@@ -96,7 +98,6 @@ fun HomeScreen(onGiveMeFactClicked: () -> Unit) {
     val haptic = LocalHapticFeedback.current
     
     Box(modifier = Modifier.fillMaxSize()) {
-        // Full size background image
         Image(
             painter = painterResource(id = R.drawable.train_background_home),
             contentDescription = null,
@@ -104,7 +105,6 @@ fun HomeScreen(onGiveMeFactClicked: () -> Unit) {
             contentScale = ContentScale.Crop
         )
 
-        // Semi-transparent overlay to make text readable
         Box(
             modifier = Modifier
                 .fillMaxSize()
@@ -114,7 +114,7 @@ fun HomeScreen(onGiveMeFactClicked: () -> Unit) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(bottom = 135.dp), // Pushes the content higher than center
+                .padding(bottom = 135.dp),
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
@@ -134,7 +134,7 @@ fun HomeScreen(onGiveMeFactClicked: () -> Unit) {
             },
             modifier = Modifier
                 .align(Alignment.BottomCenter)
-                .padding(bottom = 135.dp) // Pushes the button higher up from the bottom
+                .padding(bottom = 135.dp)
                 .padding(horizontal = 40.dp)
                 .height(64.dp)
                 .fillMaxWidth(),
@@ -149,7 +149,6 @@ fun HomeScreen(onGiveMeFactClicked: () -> Unit) {
             )
         }
 
-        // Copyright text
         Text(
             text = "© 2026 Fear Dóighiúil Studios",
             color = Color.LightGray.copy(alpha = 1f),
@@ -157,7 +156,7 @@ fun HomeScreen(onGiveMeFactClicked: () -> Unit) {
             fontWeight = FontWeight.Bold,
             modifier = Modifier
                 .align(Alignment.BottomCenter)
-                .padding(bottom = 48.dp)
+                .padding(bottom = 64.dp)
         )
     }
 }
@@ -175,8 +174,8 @@ fun FactScreen(
     val context = LocalContext.current
     val haptic = LocalHapticFeedback.current
 
-    var showMenu by remember { mutableStateOf(false) }
-    val (showOptionsDialog, setShowOptionsDialog) = remember { mutableStateOf(false) }
+    val showMenu = remember { mutableStateOf(false) }
+    val showOptionsDialog = remember { mutableStateOf(false) }
     
     var isFavorite by remember { mutableStateOf(FavoritesManager.isFavorite(context, fact)) }
 
@@ -190,20 +189,22 @@ fun FactScreen(
         ) {
             Spacer(modifier = Modifier.height(60.dp))
 
+            val scrollState = rememberScrollState()
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
-                modifier = Modifier.weight(1f),
+                modifier = Modifier
+                    .weight(1f)
+                    .verticalScroll(scrollState),
                 verticalArrangement = Arrangement.Center
             ) {
-                // Header Image
                 Image(
                     painter = painterResource(id = R.drawable.train_silhouette),
                     contentDescription = "Train Illustration",
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(200.dp)
+                        .height(120.dp)
                         .padding(bottom = 24.dp),
-                    contentScale = ContentScale.Fit
+                    contentScale = ContentScale.Crop
                 )
 
                 Text(
@@ -227,47 +228,56 @@ fun FactScreen(
                                 lineHeight = 36.sp
                             )
                         }
-                        
-                        IconButton(
-                            onClick = {
-                                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                                FavoritesManager.toggleFavorite(context, fact)
-                                isFavorite = !isFavorite
-                            },
-                            modifier = Modifier.align(Alignment.TopEnd).padding(4.dp)
-                        ) {
-                            Icon(
-                                imageVector = if (isFavorite) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
-                                contentDescription = if (isFavorite) "Remove from favorites" else "Add to favorites",
-                                tint = if (isFavorite) Color.Red else LocalContentColor.current
-                            )
-                        }
                     }
                 }
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                // Standard Android Sharing Button
-                FilledTonalButton(
-                    onClick = {
-                        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                        val sendIntent: Intent = Intent().apply {
-                            action = Intent.ACTION_SEND
-                            putExtra(Intent.EXTRA_TEXT, "Did you know? $fact #DailyTrainFacts")
-                            type = "text/plain"
-                        }
-                        val shareIntent = Intent.createChooser(sendIntent, null)
-                        context.startActivity(shareIntent)
-                    },
-                    shape = RoundedCornerShape(8.dp)
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
-                    Icon(
-                        imageVector = Icons.Default.Share,
-                        contentDescription = "Share",
-                        modifier = Modifier.size(ButtonDefaults.IconSize)
-                    )
-                    Spacer(Modifier.size(ButtonDefaults.IconSpacing))
-                    Text("Share this Fact")
+                    FilledTonalButton(
+                        onClick = {
+                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                            FavoritesManager.toggleFavorite(context, fact)
+                            isFavorite = !isFavorite
+                        },
+                        modifier = Modifier.weight(1f),
+                        shape = RoundedCornerShape(8.dp)
+                    ) {
+                        Text(if (isFavorite) "In Favorites" else "Add to Favorites", fontSize = 12.sp)
+                        Spacer(Modifier.size(ButtonDefaults.IconSpacing))
+                        Icon(
+                            imageVector = if (isFavorite) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
+                            contentDescription = null,
+                            modifier = Modifier.size(ButtonDefaults.IconSize),
+                            tint = if (isFavorite) Color.Red else LocalContentColor.current
+                        )
+                    }
+
+                    FilledTonalButton(
+                        onClick = {
+                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                            val sendIntent: Intent = Intent().apply {
+                                action = Intent.ACTION_SEND
+                                putExtra(Intent.EXTRA_TEXT, "Did you know? $fact #DailyTrainFacts")
+                                type = "text/plain"
+                            }
+                            val shareIntent = Intent.createChooser(sendIntent, null)
+                            context.startActivity(shareIntent)
+                        },
+                        modifier = Modifier.weight(1f),
+                        shape = RoundedCornerShape(8.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Share,
+                            contentDescription = null,
+                            modifier = Modifier.size(ButtonDefaults.IconSize)
+                        )
+                        Spacer(Modifier.size(ButtonDefaults.IconSpacing))
+                        Text("Share Fact", fontSize = 12.sp)
+                    }
                 }
 
                 Spacer(modifier = Modifier.height(40.dp))
@@ -287,7 +297,7 @@ fun FactScreen(
                     onExitClicked()
                 },
                 modifier = Modifier
-                    .padding(bottom = 48.dp)
+                    .padding(top = 16.dp, bottom = 48.dp)
                     .fillMaxWidth()
                     .height(56.dp),
                 shape = RoundedCornerShape(8.dp)
@@ -296,22 +306,21 @@ fun FactScreen(
             }
         }
 
-        // Options Menu Icon
         IconButton(
-            onClick = { showMenu = true },
+            onClick = { showMenu.value = true },
             modifier = Modifier
                 .align(Alignment.TopStart)
                 .padding(top = 48.dp, start = 16.dp)
         ) {
             Icon(Icons.Default.Menu, contentDescription = "Menu")
             DropdownMenu(
-                expanded = showMenu,
-                onDismissRequest = { showMenu = false }
+                expanded = showMenu.value,
+                onDismissRequest = { showMenu.value = false }
             ) {
                 DropdownMenuItem(
                     text = { Text("Favorite Facts") },
                     onClick = {
-                        showMenu = false
+                        showMenu.value = false
                         onNavigateToFavorites()
                     },
                     leadingIcon = { Icon(Icons.Default.Favorite, contentDescription = null) }
@@ -319,8 +328,8 @@ fun FactScreen(
                 DropdownMenuItem(
                     text = { Text("Reminder Settings") },
                     onClick = {
-                        showMenu = false
-                        setShowOptionsDialog(true)
+                        showMenu.value = false
+                        showOptionsDialog.value = true
                     },
                     leadingIcon = { Icon(Icons.Default.Notifications, contentDescription = null) }
                 )
@@ -328,9 +337,9 @@ fun FactScreen(
         }
     }
 
-    if (showOptionsDialog) {
+    if (showOptionsDialog.value) {
         ReminderOptionsDialog(
-            onDismiss = { setShowOptionsDialog(false) },
+            onDismiss = { showOptionsDialog.value = false },
             viewModel = viewModel
         )
     }
@@ -346,12 +355,7 @@ fun ReminderOptionsDialog(onDismiss: () -> Unit, viewModel: TrainFactsViewModel)
     val time by viewModel.reminderTime
     val isPermissionGranted by viewModel.isNotificationPermissionGranted
 
-    val (showTimePicker, setShowTimePicker) = remember { mutableStateOf(false) }
-    val timePickerState = rememberTimePickerState(
-        initialHour = time.first,
-        initialMinute = time.second,
-        is24Hour = true
-    )
+    val showTimePicker = remember { mutableStateOf(false) }
 
     val permissionLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestPermission()
@@ -364,21 +368,26 @@ fun ReminderOptionsDialog(onDismiss: () -> Unit, viewModel: TrainFactsViewModel)
         }
     }
 
-    if (showTimePicker) {
+    if (showTimePicker.value) {
+        val timePickerState = rememberTimePickerState(
+            initialHour = time.first,
+            initialMinute = time.second,
+            is24Hour = true
+        )
         TimePickerDialog(
-            onDismissRequest = { setShowTimePicker(false) },
+            onDismissRequest = { showTimePicker.value = false },
             confirmButton = {
                 TextButton(
                     onClick = {
                         haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                         viewModel.updateReminderTime(context, timePickerState.hour, timePickerState.minute)
-                        setShowTimePicker(false)
+                        showTimePicker.value = false
                     }
                 ) { Text("OK") }
             },
             dismissButton = {
                 TextButton(
-                    onClick = { setShowTimePicker(false) }
+                    onClick = { showTimePicker.value = false }
                 ) { Text("Cancel") }
             }
         ) {
@@ -418,7 +427,7 @@ fun ReminderOptionsDialog(onDismiss: () -> Unit, viewModel: TrainFactsViewModel)
                 TextButton(
                     onClick = { 
                         haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                        setShowTimePicker(true)
+                        showTimePicker.value = true
                     },
                     modifier = Modifier.fillMaxWidth()
                 ) {
