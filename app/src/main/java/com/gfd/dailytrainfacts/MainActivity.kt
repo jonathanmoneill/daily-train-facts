@@ -157,7 +157,7 @@ fun HomeScreen(onGiveMeFactClicked: () -> Unit) {
             fontWeight = FontWeight.Bold,
             modifier = Modifier
                 .align(Alignment.BottomCenter)
-                .padding(bottom = 24.dp)
+                .padding(bottom = 48.dp)
         )
     }
 }
@@ -303,19 +303,11 @@ fun FactScreen(
                 .align(Alignment.TopStart)
                 .padding(top = 48.dp, start = 16.dp)
         ) {
-            Icon(Icons.Default.Settings, contentDescription = "Settings")
+            Icon(Icons.Default.Menu, contentDescription = "Menu")
             DropdownMenu(
                 expanded = showMenu,
                 onDismissRequest = { showMenu = false }
             ) {
-                DropdownMenuItem(
-                    text = { Text("Reminder Settings") },
-                    onClick = {
-                        showMenu = false
-                        setShowOptionsDialog(true)
-                    },
-                    leadingIcon = { Icon(Icons.Default.Notifications, contentDescription = null) }
-                )
                 DropdownMenuItem(
                     text = { Text("Favorite Facts") },
                     onClick = {
@@ -323,6 +315,14 @@ fun FactScreen(
                         onNavigateToFavorites()
                     },
                     leadingIcon = { Icon(Icons.Default.Favorite, contentDescription = null) }
+                )
+                DropdownMenuItem(
+                    text = { Text("Reminder Settings") },
+                    onClick = {
+                        showMenu = false
+                        setShowOptionsDialog(true)
+                    },
+                    leadingIcon = { Icon(Icons.Default.Notifications, contentDescription = null) }
                 )
             }
         }
