@@ -143,7 +143,8 @@ fun HomeScreen(onGiveMeFactClicked: () -> Unit) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(bottom = 135.dp),
+                .safeDrawingPadding()
+                .padding(bottom = 140.dp),
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
@@ -163,7 +164,8 @@ fun HomeScreen(onGiveMeFactClicked: () -> Unit) {
             },
             modifier = Modifier
                 .align(Alignment.BottomCenter)
-                .padding(bottom = 135.dp)
+                .navigationBarsPadding()
+                .padding(bottom = 80.dp)
                 .padding(horizontal = 40.dp)
                 .height(64.dp)
                 .fillMaxWidth(),
@@ -185,7 +187,8 @@ fun HomeScreen(onGiveMeFactClicked: () -> Unit) {
             fontWeight = FontWeight.Bold,
             modifier = Modifier
                 .align(Alignment.BottomCenter)
-                .padding(bottom = 48.dp)
+                .navigationBarsPadding()
+                .padding(bottom = 16.dp)
         )
     }
 }
@@ -212,12 +215,11 @@ fun FactScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(24.dp),
+                .safeDrawingPadding()
+                .padding(horizontal = 24.dp, vertical = 16.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.SpaceBetween
         ) {
-            Spacer(modifier = Modifier.height(60.dp))
-
             val scrollState = rememberScrollState()
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
@@ -330,7 +332,7 @@ fun FactScreen(
                     onExitClicked()
                 },
                 modifier = Modifier
-                    .padding(top = 16.dp, bottom = 48.dp)
+                    .padding(top = 16.dp)
                     .fillMaxWidth()
                     .height(56.dp),
                 shape = RoundedCornerShape(8.dp)
@@ -342,8 +344,8 @@ fun FactScreen(
         IconButton(
             onClick = { setShowMenu(true) },
             modifier = Modifier
-                .align(Alignment.TopStart)
-                .padding(top = 48.dp, start = 16.dp)
+                .statusBarsPadding()
+                .padding(start = 16.dp)
         ) {
             Icon(Icons.Default.Menu, contentDescription = "Menu")
             DropdownMenu(
