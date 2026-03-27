@@ -107,14 +107,17 @@ fun TrainFactsApp(viewModel: TrainFactsViewModel) {
             label = "ScreenTransition"
         ) { screen ->
             when (screen) {
-                Screen.Home -> HomeScreen(onGiveMeFactClicked = { viewModel.navigateTo(Screen.Fact) })
-                Screen.Fact -> FactScreen(
-                    onExitClicked = { viewModel.navigateTo(Screen.Home) },
+                Screen.Home -> HomeScreen(
+                    onGiveMeFactClicked = { viewModel.navigateTo(Screen.Fact) },
                     onNavigateToFavorites = { viewModel.navigateTo(Screen.Favorites) },
                     viewModel = viewModel
                 )
+                Screen.Fact -> FactScreen(
+                    onExitClicked = { viewModel.navigateTo(Screen.Home) },
+                    viewModel = viewModel
+                )
                 Screen.Favorites -> FavoritesScreen(
-                    onBackClicked = { viewModel.navigateTo(Screen.Fact) },
+                    onBackClicked = { viewModel.navigateTo(Screen.Home) },
                     viewModel = viewModel
                 )
             }
@@ -123,8 +126,14 @@ fun TrainFactsApp(viewModel: TrainFactsViewModel) {
 }
 
 @Composable
-fun HomeScreen(onGiveMeFactClicked: () -> Unit) {
+fun HomeScreen(
+    onGiveMeFactClicked: () -> Unit,
+    onNavigateToFavorites: () -> Unit,
+    viewModel: TrainFactsViewModel
+) {
     val haptic = LocalHapticFeedback.current
+    val (showMenu, setShowMenu) = remember { mutableStateOf(false) }
+    val (showOptionsDialog, setShowOptionsDialog) = remember { mutableStateOf(false) }
     
     Box(modifier = Modifier.fillMaxSize()) {
         Image(
@@ -190,13 +199,49 @@ fun HomeScreen(onGiveMeFactClicked: () -> Unit) {
                 .navigationBarsPadding()
                 .padding(bottom = 16.dp)
         )
+
+        IconButton(
+            onClick = { setShowMenu(true) },
+            modifier = Modifier
+                .statusBarsPadding()
+                .padding(start = 16.dp)
+        ) {
+            Icon(Icons.Default.Menu, contentDescription = "Menu", tint = Color.White)
+            DropdownMenu(
+                expanded = showMenu,
+                onDismissRequest = { setShowMenu(false) }
+            ) {
+                DropdownMenuItem(
+                    text = { Text("Favorite Facts") },
+                    onClick = {
+                        setShowMenu(false)
+                        onNavigateToFavorites()
+                    },
+                    leadingIcon = { Icon(Icons.Default.Favorite, contentDescription = null) }
+                )
+                DropdownMenuItem(
+                    text = { Text("Reminder Settings") },
+                    onClick = {
+                        setShowMenu(false)
+                        setShowOptionsDialog(true)
+                    },
+                    leadingIcon = { Icon(Icons.Default.Notifications, contentDescription = null) }
+                )
+            }
+        }
+    }
+
+    if (showOptionsDialog) {
+        ReminderOptionsDialog(
+            onDismiss = { setShowOptionsDialog(false) },
+            viewModel = viewModel
+        )
     }
 }
 
 @Composable
 fun FactScreen(
     onExitClicked: () -> Unit, 
-    onNavigateToFavorites: () -> Unit,
     viewModel: TrainFactsViewModel
 ) {
     val calendar = Calendar.getInstance()
@@ -207,9 +252,6 @@ fun FactScreen(
     
     val context = LocalContext.current
     val haptic = LocalHapticFeedback.current
-
-    val (showMenu, setShowMenu) = remember { mutableStateOf(false) }
-    val (showOptionsDialog, setShowOptionsDialog) = remember { mutableStateOf(false) }
     
     Box(modifier = Modifier.fillMaxSize()) {
         Column(
@@ -340,43 +382,6 @@ fun FactScreen(
                 Text(text = "Exit", fontSize = 18.sp)
             }
         }
-
-        IconButton(
-            onClick = { setShowMenu(true) },
-            modifier = Modifier
-                .statusBarsPadding()
-                .padding(start = 16.dp)
-        ) {
-            Icon(Icons.Default.Menu, contentDescription = "Menu")
-            DropdownMenu(
-                expanded = showMenu,
-                onDismissRequest = { setShowMenu(false) }
-            ) {
-                DropdownMenuItem(
-                    text = { Text("Favorite Facts") },
-                    onClick = {
-                        setShowMenu(false)
-                        onNavigateToFavorites()
-                    },
-                    leadingIcon = { Icon(Icons.Default.Favorite, contentDescription = null) }
-                )
-                DropdownMenuItem(
-                    text = { Text("Reminder Settings") },
-                    onClick = {
-                        setShowMenu(false)
-                        setShowOptionsDialog(true)
-                    },
-                    leadingIcon = { Icon(Icons.Default.Notifications, contentDescription = null) }
-                )
-            }
-        }
-    }
-
-    if (showOptionsDialog) {
-        ReminderOptionsDialog(
-            onDismiss = { setShowOptionsDialog(false) },
-            viewModel = viewModel
-        )
     }
 }
 

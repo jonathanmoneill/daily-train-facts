@@ -1,6 +1,7 @@
 package com.gfd.dailytrainfacts
 
 import android.content.Context
+import android.content.SharedPreferences
 import com.gfd.dailytrainfacts.data.Fact
 import com.gfd.dailytrainfacts.data.FactRepository
 import kotlinx.coroutines.Dispatchers
@@ -18,12 +19,18 @@ class TrainFactsViewModelTest {
 
     private val repository: FactRepository = mock()
     private val context: Context = mock()
+    private val sharedPrefs: SharedPreferences = mock()
     private lateinit var viewModel: TrainFactsViewModel
     private val testDispatcher = StandardTestDispatcher()
 
     @Before
     fun setup() {
         Dispatchers.setMain(testDispatcher)
+
+        // Mock SharedPreferences to prevent NPE during init
+        whenever(context.getSharedPreferences(any(), any())).thenReturn(sharedPrefs)
+        whenever(sharedPrefs.getBoolean(any(), any())).thenReturn(false)
+        whenever(sharedPrefs.getInt(any(), any())).thenReturn(0)
 
         val initialFlow = flowOf(emptyList<Fact>())
         whenever(repository.getFavoriteFacts()).thenReturn(initialFlow)

@@ -37,8 +37,6 @@ class MainActivityTest {
 
     @Test
     fun burgerMenu_navigateToFavorites() {
-        composeTestRule.onNodeWithText("Give Me a Train Fact").performClick()
-
         // Open burger menu
         composeTestRule.onNodeWithContentDescription("Menu").performClick()
 
@@ -77,6 +75,11 @@ class MainActivityTest {
         // First, add a fact to be removed
         composeTestRule.onNodeWithText("Give Me a Train Fact").performClick()
         composeTestRule.onNodeWithText("Add to Favorites", substring = true).performClick()
+        
+        // Go back to Home Screen
+        composeTestRule.onNodeWithText("Exit").performClick()
+
+        // Open burger menu
         composeTestRule.onNodeWithContentDescription("Menu").performClick()
         composeTestRule.onNodeWithText("Favorite Facts").performClick()
 
