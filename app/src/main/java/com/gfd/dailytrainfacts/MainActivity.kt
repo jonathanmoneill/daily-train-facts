@@ -13,6 +13,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.*
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -33,7 +34,6 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -91,7 +91,7 @@ class MainActivity : ComponentActivity() {
 }
 
 enum class Screen {
-    Home, Fact, Favorites
+    Home, Fact, Favourites
 }
 
 @Composable
@@ -100,25 +100,24 @@ fun TrainFactsApp(viewModel: TrainFactsViewModel) {
 
     Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
         AnimatedContent(
-            targetState = currentScreen,
+            targetState = currentScreen == Screen.Favourites,
             transitionSpec = {
                 fadeIn() togetherWith fadeOut()
             },
             label = "ScreenTransition"
-        ) { screen ->
-            when (screen) {
-                Screen.Home -> HomeScreen(
-                    onGiveMeFactClicked = { viewModel.navigateTo(Screen.Fact) },
-                    onNavigateToFavorites = { viewModel.navigateTo(Screen.Favorites) },
-                    viewModel = viewModel
-                )
-                Screen.Fact -> FactScreen(
-                    onExitClicked = { viewModel.navigateTo(Screen.Home) },
-                    viewModel = viewModel
-                )
-                Screen.Favorites -> FavoritesScreen(
+        ) { isFavourites ->
+            if (isFavourites) {
+                FavouritesScreen(
                     onBackClicked = { viewModel.navigateTo(Screen.Home) },
                     viewModel = viewModel
+                )
+            } else {
+                HomeScreen(
+                    onGiveMeFactClicked = { viewModel.navigateTo(Screen.Fact) },
+                    onNavigateToFavourites = { viewModel.navigateTo(Screen.Favourites) },
+                    viewModel = viewModel,
+                    showFactOverlay = currentScreen == Screen.Fact,
+                    onCloseFactOverlay = { viewModel.navigateTo(Screen.Home) }
                 )
             }
         }
@@ -128,8 +127,10 @@ fun TrainFactsApp(viewModel: TrainFactsViewModel) {
 @Composable
 fun HomeScreen(
     onGiveMeFactClicked: () -> Unit,
-    onNavigateToFavorites: () -> Unit,
-    viewModel: TrainFactsViewModel
+    onNavigateToFavourites: () -> Unit,
+    viewModel: TrainFactsViewModel,
+    showFactOverlay: Boolean = false,
+    onCloseFactOverlay: () -> Unit = {}
 ) {
     val haptic = LocalHapticFeedback.current
     val (showMenu, setShowMenu) = remember { mutableStateOf(false) }
@@ -146,14 +147,14 @@ fun HomeScreen(
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .background(Color.Black.copy(alpha = 0.4f))
+                .background(Color.Black.copy(alpha = 0.25f))
         )
 
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .safeDrawingPadding()
-                .padding(bottom = 140.dp),
+                .padding(bottom = 145.dp),
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
@@ -212,10 +213,10 @@ fun HomeScreen(
                 onDismissRequest = { setShowMenu(false) }
             ) {
                 DropdownMenuItem(
-                    text = { Text("Favorite Facts") },
+                    text = { Text("Favourite Facts") },
                     onClick = {
                         setShowMenu(false)
-                        onNavigateToFavorites()
+                        onNavigateToFavourites()
                     },
                     leadingIcon = { Icon(Icons.Default.Favorite, contentDescription = null) }
                 )
@@ -229,6 +230,13 @@ fun HomeScreen(
                 )
             }
         }
+
+        if (showFactOverlay) {
+            FactOverlay(
+                onCloseClicked = onCloseFactOverlay,
+                viewModel = viewModel
+            )
+        }
     }
 
     if (showOptionsDialog) {
@@ -240,8 +248,8 @@ fun HomeScreen(
 }
 
 @Composable
-fun FactScreen(
-    onExitClicked: () -> Unit, 
+fun FactOverlay(
+    onCloseClicked: () -> Unit, 
     viewModel: TrainFactsViewModel
 ) {
     val calendar = Calendar.getInstance()
@@ -253,22 +261,26 @@ fun FactScreen(
     val context = LocalContext.current
     val haptic = LocalHapticFeedback.current
     
-    Box(modifier = Modifier.fillMaxSize()) {
-        Column(
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color.Black.copy(alpha = 0.7f))
+            .clickable(onClick = onCloseClicked)
+    ) {
+        Card(
             modifier = Modifier
-                .fillMaxSize()
-                .safeDrawingPadding()
-                .padding(horizontal = 24.dp, vertical = 16.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.SpaceBetween
+                .align(Alignment.Center)
+                .padding(24.dp)
+                .clickable(enabled = false) {}, // Prevent clicks on card from dismissing overlay
+            shape = RoundedCornerShape(16.dp),
+            elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
         ) {
-            val scrollState = rememberScrollState()
             Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
                 modifier = Modifier
-                    .weight(1f)
-                    .verticalScroll(scrollState),
-                verticalArrangement = Arrangement.Center
+                    .padding(24.dp)
+                    .verticalScroll(rememberScrollState()),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 Image(
                     painter = painterResource(id = R.drawable.train_silhouette),
@@ -276,58 +288,49 @@ fun FactScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(120.dp)
-                        .padding(bottom = 24.dp),
-                    contentScale = ContentScale.Crop
+                        .padding(bottom = 8.dp),
+                    contentScale = ContentScale.Fit
                 )
 
                 Text(
                     text = currentDate,
-                    style = MaterialTheme.typography.headlineSmall,
+                    style = MaterialTheme.typography.titleMedium,
                     color = MaterialTheme.colorScheme.primary,
                     fontWeight = FontWeight.Bold
                 )
-                Spacer(modifier = Modifier.height(40.dp))
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
-                ) {
-                    Box(modifier = Modifier.fillMaxWidth()) {
-                        SelectionContainer {
-                            Text(
-                                text = currentFact?.text ?: "Loading...",
-                                style = MaterialTheme.typography.headlineMedium,
-                                textAlign = TextAlign.Center,
-                                modifier = Modifier.padding(24.dp),
-                                lineHeight = 36.sp
-                            )
-                        }
-                    }
-                }
 
-                Spacer(modifier = Modifier.height(16.dp))
+                SelectionContainer {
+                    Text(
+                        text = currentFact?.text ?: "Loading...",
+                        style = MaterialTheme.typography.headlineSmall,
+                        textAlign = TextAlign.Center,
+                        lineHeight = 28.sp
+                    )
+                }
 
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(16.dp)
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    val isFavorite = currentFact?.isFavorite ?: false
+                    val isFavourite = currentFact?.isFavourite ?: false
                     FilledTonalButton(
                         onClick = {
                             haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                            currentFact?.let { viewModel.toggleFavorite(it) }
+                            currentFact?.let { viewModel.toggleFavourite(it) }
                         },
                         modifier = Modifier.weight(1f),
                         shape = RoundedCornerShape(8.dp),
+                        contentPadding = PaddingValues(horizontal = 8.dp),
                         enabled = currentFact != null
                     ) {
-                        Text(if (isFavorite) "In Favorites" else "Add to Favorites", fontSize = 12.sp)
-                        Spacer(Modifier.size(ButtonDefaults.IconSpacing))
                         Icon(
-                            imageVector = if (isFavorite) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
+                            imageVector = if (isFavourite) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
                             contentDescription = null,
-                            modifier = Modifier.size(ButtonDefaults.IconSize),
-                            tint = if (isFavorite) Color.Red else LocalContentColor.current
+                            modifier = Modifier.size(18.dp),
+                            tint = if (isFavourite) Color.Red else LocalContentColor.current
                         )
+                        Spacer(Modifier.width(4.dp))
+                        Text(if (isFavourite) "Favourite" else "Add", fontSize = 11.sp)
                     }
 
                     FilledTonalButton(
@@ -345,41 +348,31 @@ fun FactScreen(
                         },
                         modifier = Modifier.weight(1f),
                         shape = RoundedCornerShape(8.dp),
+                        contentPadding = PaddingValues(horizontal = 8.dp),
                         enabled = currentFact != null
                     ) {
                         Icon(
                             imageVector = Icons.Default.Share,
                             contentDescription = null,
-                            modifier = Modifier.size(ButtonDefaults.IconSize)
+                            modifier = Modifier.size(18.dp)
                         )
-                        Spacer(Modifier.size(ButtonDefaults.IconSpacing))
-                        Text("Share Fact", fontSize = 12.sp)
+                        Spacer(Modifier.width(4.dp))
+                        Text("Share", fontSize = 11.sp)
                     }
                 }
 
-                Spacer(modifier = Modifier.height(40.dp))
-                Text(
-                    text = "Come back tomorrow for a new train fact...",
-                    style = MaterialTheme.typography.bodyLarge,
-                    fontSize = 24.sp,
-                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f),
-                    fontStyle = FontStyle.Italic,
-                    textAlign = TextAlign.Center
-                )
-            }
-
-            Button(
-                onClick = {
-                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                    onExitClicked()
-                },
-                modifier = Modifier
-                    .padding(top = 16.dp)
-                    .fillMaxWidth()
-                    .height(56.dp),
-                shape = RoundedCornerShape(8.dp)
-            ) {
-                Text(text = "Exit", fontSize = 18.sp)
+                Button(
+                    onClick = {
+                        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                        onCloseClicked()
+                    },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(50.dp),
+                    shape = RoundedCornerShape(8.dp)
+                ) {
+                    Text(text = "Close", fontSize = 16.sp)
+                }
             }
         }
     }
@@ -488,16 +481,16 @@ fun ReminderOptionsDialog(onDismiss: () -> Unit, viewModel: TrainFactsViewModel)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun FavoritesScreen(onBackClicked: () -> Unit, viewModel: TrainFactsViewModel) {
+fun FavouritesScreen(onBackClicked: () -> Unit, viewModel: TrainFactsViewModel) {
     val haptic = LocalHapticFeedback.current
-    val favorites by viewModel.favoriteFacts.collectAsState()
+    val favourites by viewModel.favouriteFacts.collectAsState()
     
     val (factToRemove, setFactToRemove) = remember { mutableStateOf<Fact?>(null) }
 
     Scaffold(
         topBar = {
             CenterAlignedTopAppBar(
-                title = { Text("Favorite Facts", fontWeight = FontWeight.Bold) },
+                title = { Text("Favourite Facts", fontWeight = FontWeight.Bold) },
                 navigationIcon = {
                     IconButton(onClick = {
                         haptic.performHapticFeedback(HapticFeedbackType.LongPress)
@@ -509,9 +502,9 @@ fun FavoritesScreen(onBackClicked: () -> Unit, viewModel: TrainFactsViewModel) {
             )
         }
     ) { padding ->
-        if (favorites.isEmpty()) {
+        if (favourites.isEmpty()) {
             Box(modifier = Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.Center) {
-                Text("No favorites yet.", style = MaterialTheme.typography.bodyLarge, color = Color.Gray)
+                Text("No favourites yet.", style = MaterialTheme.typography.bodyLarge, color = Color.Gray)
             }
         } else {
             LazyColumn(
@@ -519,7 +512,7 @@ fun FavoritesScreen(onBackClicked: () -> Unit, viewModel: TrainFactsViewModel) {
                 contentPadding = PaddingValues(16.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                items(favorites) { fact ->
+                items(favourites) { fact ->
                     Card(
                         modifier = Modifier.fillMaxWidth(),
                         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
@@ -537,7 +530,7 @@ fun FavoritesScreen(onBackClicked: () -> Unit, viewModel: TrainFactsViewModel) {
                                 haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                                 setFactToRemove(fact)
                             }) {
-                                Icon(Icons.Default.Favorite, contentDescription = "Remove from favorites", tint = Color.Red)
+                                Icon(Icons.Default.Favorite, contentDescription = "Remove from favourites", tint = Color.Red)
                             }
                         }
                     }
@@ -550,14 +543,14 @@ fun FavoritesScreen(onBackClicked: () -> Unit, viewModel: TrainFactsViewModel) {
     if (factToRemove != null) {
         AlertDialog(
             onDismissRequest = { setFactToRemove(null) },
-            title = { Text("Remove from Favorites?") },
-            text = { Text("Are you sure you want to remove this fact from your favorites list?") },
+            title = { Text("Remove from Favourites?") },
+            text = { Text("Are you sure you want to remove this fact from your favourites list?") },
             confirmButton = {
                 TextButton(
                     onClick = {
                         factToRemove.let { fact ->
                             haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                            viewModel.toggleFavorite(fact)
+                            viewModel.toggleFavourite(fact)
                         }
                         setFactToRemove(null)
                     }

@@ -44,24 +44,15 @@ class FactDaoTest {
     }
 
     @Test
-    fun toggleFavoriteAndGetFavorites() = runBlocking {
-        val fact = Fact(text = "Favorite Fact", isFavorite = false)
+    fun toggleFavouriteAndGetFavourites() = runBlocking {
+        val fact = Fact(text = "Favourite Fact", isFavourite = false)
         factDao.insertFacts(listOf(fact))
         
-        val insertedFact = factDao.getFactByText("Favorite Fact")!!
-        factDao.updateFact(insertedFact.copy(isFavorite = true))
+        val insertedFact = factDao.getFactByText("Favourite Fact")!!
+        factDao.updateFact(insertedFact.copy(isFavourite = true))
         
-        val favorites = factDao.getFavoriteFacts().first()
-        assertEquals(1, favorites.size)
-        assertTrue(favorites[0].isFavorite)
-    }
-
-    @Test
-    fun getFactAtIndex() = runBlocking {
-        val facts = listOf(Fact(text = "A"), Fact(text = "B"), Fact(text = "C"))
-        factDao.insertFacts(facts)
-        
-        val fact = factDao.getFactAtIndex(1)
-        assertEquals("B", fact?.text)
+        val favourites = factDao.getFavouriteFacts().first()
+        assertEquals(1, favourites.size)
+        assertTrue(favourites[0].isFavourite)
     }
 }

@@ -20,8 +20,8 @@ interface FactDao {
     @Update
     suspend fun updateFact(fact: Fact)
 
-    @Query("SELECT * FROM facts WHERE isFavorite = 1")
-    fun getFavoriteFacts(): Flow<List<Fact>>
+    @Query("SELECT * FROM facts WHERE isFavourite = 1")
+    fun getFavouriteFacts(): Flow<List<Fact>>
 
     @Query("SELECT * FROM facts WHERE lastShownDate = :today LIMIT 1")
     suspend fun getFactForToday(today: Long): Fact?

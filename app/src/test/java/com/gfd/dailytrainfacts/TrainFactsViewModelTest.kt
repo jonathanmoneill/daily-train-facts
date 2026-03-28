@@ -33,7 +33,7 @@ class TrainFactsViewModelTest {
         whenever(sharedPrefs.getInt(any(), any())).thenReturn(0)
 
         val initialFlow = flowOf(emptyList<Fact>())
-        whenever(repository.getFavoriteFacts()).thenReturn(initialFlow)
+        whenever(repository.getFavouriteFacts()).thenReturn(initialFlow)
         
         viewModel = TrainFactsViewModel(repository)
     }
@@ -48,8 +48,8 @@ class TrainFactsViewModelTest {
         assertEquals(Screen.Home, viewModel.currentScreen.value)
         viewModel.navigateTo(Screen.Fact)
         assertEquals(Screen.Fact, viewModel.currentScreen.value)
-        viewModel.navigateTo(Screen.Favorites)
-        assertEquals(Screen.Favorites, viewModel.currentScreen.value)
+        viewModel.navigateTo(Screen.Favourites)
+        assertEquals(Screen.Favourites, viewModel.currentScreen.value)
     }
 
     @Test
@@ -62,34 +62,34 @@ class TrainFactsViewModelTest {
     }
 
     @Test
-    fun init_loadsDataAndSubscribesToFavorites() = runTest {
-        val favoriteFacts = listOf(Fact(text = "Favorite 1", isFavorite = true))
-        val favoritesFlow = flowOf(favoriteFacts)
+    fun init_loadsDataAndSubscribesToFavourites() = runTest {
+        val favouriteFacts = listOf(Fact(text = "Favourite 1", isFavourite = true))
+        val favouritesFlow = flowOf(favouriteFacts)
         
-        whenever(repository.getFavoriteFacts()).thenReturn(favoritesFlow)
+        whenever(repository.getFavouriteFacts()).thenReturn(favouritesFlow)
         whenever(repository.getTodayFact()).thenReturn(Fact(text = "Daily Fact"))
 
         viewModel.init(context)
         advanceUntilIdle()
 
         verify(repository).initializeDatabaseIfNeeded()
-        // Check that the favorites state was actually updated by the flow
-        assertEquals(favoriteFacts, viewModel.favoriteFacts.value)
+        // Check that the favourites state was actually updated by the flow
+        assertEquals(favouriteFacts, viewModel.favouriteFacts.value)
         assertEquals("Daily Fact", viewModel.currentFact.value?.text)
     }
 
     @Test
-    fun toggleFavorite_callsRepositoryAndReloadsFact() = runTest {
-        val fact = Fact(id = 1, text = "Test Fact", isFavorite = false)
-        val updatedFact = fact.copy(isFavorite = true)
+    fun toggleFavourite_callsRepositoryAndReloadsFact() = runTest {
+        val fact = Fact(id = 1, text = "Test Fact", isFavourite = false)
+        val updatedFact = fact.copy(isFavourite = true)
         
         whenever(repository.getFactByText(fact.text)).thenReturn(updatedFact)
 
-        viewModel.toggleFavorite(fact)
+        viewModel.toggleFavourite(fact)
         advanceUntilIdle()
 
-        verify(repository).toggleFavorite(fact.text)
+        verify(repository).toggleFavourite(fact.text)
         verify(repository).getFactByText(fact.text)
-        assertEquals(true, viewModel.currentFact.value?.isFavorite)
+        assertEquals(true, viewModel.currentFact.value?.isFavourite)
     }
 }

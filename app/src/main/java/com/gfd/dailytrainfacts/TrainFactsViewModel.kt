@@ -32,8 +32,8 @@ class TrainFactsViewModel(private val repository: FactRepository) : ViewModel() 
     private val _currentFact = MutableStateFlow<Fact?>(null)
     val currentFact: StateFlow<Fact?> = _currentFact.asStateFlow()
 
-    private val _favoriteFacts = MutableStateFlow<List<Fact>>(emptyList())
-    val favoriteFacts: StateFlow<List<Fact>> = _favoriteFacts.asStateFlow()
+    private val _favouriteFacts = MutableStateFlow<List<Fact>>(emptyList())
+    val favouriteFacts: StateFlow<List<Fact>> = _favouriteFacts.asStateFlow()
 
     fun navigateTo(screen: Screen) {
         _currentScreen.value = screen
@@ -47,8 +47,8 @@ class TrainFactsViewModel(private val repository: FactRepository) : ViewModel() 
         viewModelScope.launch {
             repository.initializeDatabaseIfNeeded()
             loadTodayFact()
-            repository.getFavoriteFacts().collect {
-                _favoriteFacts.value = it
+            repository.getFavouriteFacts().collect {
+                _favouriteFacts.value = it
             }
         }
     }
@@ -57,10 +57,10 @@ class TrainFactsViewModel(private val repository: FactRepository) : ViewModel() 
         _currentFact.value = repository.getTodayFact()
     }
 
-    fun toggleFavorite(fact: Fact) {
+    fun toggleFavourite(fact: Fact) {
         viewModelScope.launch {
-            repository.toggleFavorite(fact.text)
-            // Reload current fact to update its favorite status in UI
+            repository.toggleFavourite(fact.text)
+            // Reload current fact to update its favourite status in UI
             _currentFact.value = repository.getFactByText(fact.text)
         }
     }

@@ -8,16 +8,16 @@ import java.util.Calendar
 
 class FactRepository(private val factDao: FactDao) {
 
-    fun getFavoriteFacts(): Flow<List<Fact>> = factDao.getFavoriteFacts()
+    fun getFavouriteFacts(): Flow<List<Fact>> = factDao.getFavouriteFacts()
 
     suspend fun getFactByText(text: String): Fact? = withContext(Dispatchers.IO) {
         factDao.getFactByText(text)
     }
 
-    suspend fun toggleFavorite(factText: String) = withContext(Dispatchers.IO) {
+    suspend fun toggleFavourite(factText: String) = withContext(Dispatchers.IO) {
         val fact = factDao.getFactByText(factText)
         if (fact != null) {
-            factDao.updateFact(fact.copy(isFavorite = !fact.isFavorite))
+            factDao.updateFact(fact.copy(isFavourite = !fact.isFavourite))
         }
     }
 

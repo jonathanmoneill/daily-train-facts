@@ -35,28 +35,27 @@ class FactRepositoryTest {
     }
 
     @Test
-    fun toggleFavorite_updatesFactCorrectly() = runTest {
+    fun toggleFavourite_updatesFactCorrectly() = runTest {
         val factText = "Test Fact"
-        val fact = Fact(id = 1, text = factText, isFavorite = false)
+        val fact = Fact(id = 1, text = factText, isFavourite = false)
         whenever(factDao.getFactByText(factText)).thenReturn(fact)
 
-        repository.toggleFavorite(factText)
+        repository.toggleFavourite(factText)
 
         verify(factDao).updateFact(check {
             assertEquals(factText, it.text)
-            assertEquals(true, it.isFavorite)
+            assertEquals(true, it.isFavourite)
         })
     }
 
     @Test
-    fun getFavoriteFacts_returnsFlowFromDao() = runTest {
-        val favorites = listOf(Fact(text = "Fav"))
-        val flow = flowOf(favorites)
-        whenever(factDao.getFavoriteFacts()).thenReturn(flow)
+    fun getFavouriteFacts_returnsFlowFromDao() = runTest {
+        val favourites = listOf(Fact(text = "Fav"))
+        val flow = flowOf(favourites)
+        whenever(factDao.getFavouriteFacts()).thenReturn(flow)
 
-        val result = repository.getFavoriteFacts().first()
-        // result.first() actually consumes the flow, so 'flow' is used.
-        assertEquals(favorites, result)
+        val result = repository.getFavouriteFacts().first()
+        assertEquals(favourites, result)
     }
 
     @Test
