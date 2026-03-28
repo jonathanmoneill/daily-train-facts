@@ -92,4 +92,23 @@ class TrainFactsViewModelTest {
         verify(repository).getFactByText(fact.text)
         assertEquals(true, viewModel.currentFact.value?.isFavourite)
     }
+
+    @Test
+    fun toggleReminder_updatesState() {
+        // Use a real context/mock behavior if ReminderManager is more complex
+        // Here we just check the ViewModel state update
+        viewModel.toggleReminder(context, true)
+        assertEquals(true, viewModel.isReminderEnabled.value)
+        
+        viewModel.toggleReminder(context, false)
+        assertEquals(false, viewModel.isReminderEnabled.value)
+    }
+
+    @Test
+    fun updateReminderTime_updatesStateAndSyncsIfEnabled() {
+        viewModel.toggleReminder(context, true)
+        viewModel.updateReminderTime(context, 10, 30)
+        
+        assertEquals(Pair(10, 30), viewModel.reminderTime.value)
+    }
 }

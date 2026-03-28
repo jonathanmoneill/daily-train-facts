@@ -282,6 +282,8 @@ fun FactOverlay(
             modifier = Modifier
                 .align(Alignment.Center)
                 .padding(24.dp)
+                .fillMaxWidth()
+                .heightIn(min = 450.dp, max = 650.dp)
                 .clickable(enabled = false) {}, // Prevent clicks on card from dismissing overlay
             shape = RoundedCornerShape(16.dp),
             elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
@@ -292,16 +294,17 @@ fun FactOverlay(
             Column(
                 modifier = Modifier
                     .padding(24.dp)
-                    .verticalScroll(rememberScrollState()),
+                    .fillMaxSize(),
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
+                // Header section
                 Image(
                     painter = painterResource(id = R.drawable.train_silhouette),
                     contentDescription = "Train Illustration",
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(120.dp)
+                        .height(100.dp)
                         .padding(bottom = 8.dp),
                     contentScale = ContentScale.Fit
                 )
@@ -313,15 +316,30 @@ fun FactOverlay(
                     fontWeight = FontWeight.Bold
                 )
 
-                SelectionContainer {
-                    Text(
-                        text = currentFact?.text ?: "Loading...",
-                        style = MaterialTheme.typography.headlineSmall,
-                        textAlign = TextAlign.Center,
-                        lineHeight = 28.sp
-                    )
+                // Scrollable fact area that expands to fill available space
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxWidth(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Column(
+                        modifier = Modifier.verticalScroll(rememberScrollState()),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        SelectionContainer {
+                            Text(
+                                text = currentFact?.text ?: "Loading today's train fact...",
+                                style = MaterialTheme.typography.headlineSmall,
+                                textAlign = TextAlign.Center,
+                                lineHeight = 34.sp,
+                                modifier = Modifier.padding(horizontal = 8.dp)
+                            )
+                        }
+                    }
                 }
 
+                // Action Buttons at the bottom
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(12.dp)
@@ -334,7 +352,7 @@ fun FactOverlay(
                         },
                         modifier = Modifier.weight(1f),
                         shape = RoundedCornerShape(8.dp),
-                        contentPadding = PaddingValues(horizontal = 8.dp),
+                        contentPadding = PaddingValues(horizontal = 4.dp),
                         enabled = currentFact != null
                     ) {
                         Text(if (isFavourite) "Favourite" else "Add to Favourites", fontSize = 11.sp)
@@ -362,7 +380,7 @@ fun FactOverlay(
                         },
                         modifier = Modifier.weight(1f),
                         shape = RoundedCornerShape(8.dp),
-                        contentPadding = PaddingValues(horizontal = 8.dp),
+                        contentPadding = PaddingValues(horizontal = 4.dp),
                         enabled = currentFact != null
                     ) {
                         Icon(
