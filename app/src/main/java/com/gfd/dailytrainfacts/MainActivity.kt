@@ -28,12 +28,15 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Shadow
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -161,9 +164,17 @@ fun HomeScreen(
             Text(
                 text = "DAILY TRAIN FACTS",
                 color = Color.White,
-                fontSize = 36.sp,
-                fontWeight = FontWeight.ExtraBold,
-                textAlign = TextAlign.Center
+                fontSize = 44.sp,
+                fontWeight = FontWeight.Black,
+                textAlign = TextAlign.Center,
+                style = TextStyle(
+                    shadow = Shadow(
+                        color = Color.Black.copy(alpha = 0.5f),
+                        offset = Offset(4f, 4f),
+                        blurRadius = 8f
+                    ),
+                    letterSpacing = 4.sp
+                )
             )
         }
 
@@ -273,7 +284,10 @@ fun FactOverlay(
                 .padding(24.dp)
                 .clickable(enabled = false) {}, // Prevent clicks on card from dismissing overlay
             shape = RoundedCornerShape(16.dp),
-            elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
+            elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.8f)
+            )
         ) {
             Column(
                 modifier = Modifier
@@ -323,14 +337,14 @@ fun FactOverlay(
                         contentPadding = PaddingValues(horizontal = 8.dp),
                         enabled = currentFact != null
                     ) {
+                        Text(if (isFavourite) "Favourite" else "Add to Favourites", fontSize = 11.sp)
+                        Spacer(Modifier.width(4.dp))
                         Icon(
                             imageVector = if (isFavourite) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
                             contentDescription = null,
                             modifier = Modifier.size(18.dp),
                             tint = if (isFavourite) Color.Red else LocalContentColor.current
                         )
-                        Spacer(Modifier.width(4.dp))
-                        Text(if (isFavourite) "Favourite" else "Add", fontSize = 11.sp)
                     }
 
                     FilledTonalButton(
