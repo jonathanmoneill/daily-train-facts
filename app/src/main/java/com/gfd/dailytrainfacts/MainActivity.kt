@@ -283,7 +283,7 @@ fun FactOverlay(
                 .align(Alignment.Center)
                 .padding(24.dp)
                 .fillMaxWidth()
-                .heightIn(min = 450.dp, max = 650.dp)
+                .heightIn(min = 250.dp, max = 650.dp)
                 .clickable(enabled = false) {}, // Prevent clicks on card from dismissing overlay
             shape = RoundedCornerShape(16.dp),
             elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
