@@ -73,10 +73,27 @@ class MainActivityTest {
     }
     
     @Test
+    fun favouritesScreen_showsShareButton() {
+        // First, add a fact to favourites so it shows up in the list
+        composeTestRule.onNodeWithText("Give Me a Train Fact").performClick()
+        composeTestRule.onNodeWithText("Add to Favourites", substring = true).performClick()
+        
+        // Close overlay to go back to Home
+        composeTestRule.onNodeWithText("Close").performClick()
+
+        // Open burger menu and navigate to Favourites
+        composeTestRule.onNodeWithContentDescription("Menu").performClick()
+        composeTestRule.onNodeWithText("Favourite Facts").performClick()
+
+        // Verify that the share button exists for the favourite fact
+        composeTestRule.onNodeWithContentDescription("Share fact").assertIsDisplayed()
+    }
+    
+    @Test
     fun favouritesScreen_showsConfirmationDialog_onRemove() {
         // First, add a fact to be removed
         composeTestRule.onNodeWithText("Give Me a Train Fact").performClick()
-        composeTestRule.onNodeWithText("Favourite", substring = true).performClick()
+        composeTestRule.onNodeWithText("Add to Favourites", substring = true).performClick()
         
         // Close overlay to go back to Home
         composeTestRule.onNodeWithText("Close").performClick()

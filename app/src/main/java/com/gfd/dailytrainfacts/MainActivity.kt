@@ -515,6 +515,7 @@ fun ReminderOptionsDialog(onDismiss: () -> Unit, viewModel: TrainFactsViewModel)
 @Composable
 fun FavouritesScreen(onBackClicked: () -> Unit, viewModel: TrainFactsViewModel) {
     val haptic = LocalHapticFeedback.current
+    val context = LocalContext.current
     val favourites by viewModel.favouriteFacts.collectAsState()
     
     val (factToRemove, setFactToRemove) = remember { mutableStateOf<Fact?>(null) }
@@ -558,6 +559,18 @@ fun FavouritesScreen(onBackClicked: () -> Unit, viewModel: TrainFactsViewModel) 
                                 style = MaterialTheme.typography.bodyLarge,
                                 modifier = Modifier.weight(1f)
                             )
+                            IconButton(onClick = {
+                                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                val sendIntent: Intent = Intent().apply {
+                                    action = Intent.ACTION_SEND
+                                    putExtra(Intent.EXTRA_TEXT, "Did you know? ${fact.text} #DailyTrainFacts")
+                                    type = "text/plain"
+                                }
+                                val shareIntent = Intent.createChooser(sendIntent, null)
+                                context.startActivity(shareIntent)
+                            }) {
+                                Icon(Icons.Default.Share, contentDescription = "Share fact")
+                            }
                             IconButton(onClick = {
                                 haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                                 setFactToRemove(fact)
