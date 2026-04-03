@@ -121,6 +121,32 @@ class MainActivityTest {
     }
 
     @Test
+    fun favouritesScreen_clickFact_opensOverlay() {
+        // 1. Add a fact to favourites from the Home screen
+        composeTestRule.onNodeWithText("Give Me a Train Fact").performClick()
+        composeTestRule.onNodeWithText("Add to Favourites", substring = true).performClick()
+        composeTestRule.onNodeWithText("Close").performClick()
+
+        // 2. Navigate to Favourites screen
+        composeTestRule.onNodeWithContentDescription("Menu").performClick()
+        composeTestRule.onNodeWithText("Favourite Facts").performClick()
+
+        // 3. Find a fact card (which is now clickable) and click it
+        // We look for any card that has a click action on the Favourites screen
+        composeTestRule.onAllNodes(hasClickAction())
+            .filterToOne(hasAnyChild(hasText("Favourite Facts").not())) // Avoid the header or back button if they have clicks
+            .performClick()
+
+        // 4. Verify that the FactOverlay is shown
+        composeTestRule.onNodeWithText("Close").assertIsDisplayed()
+        
+        // 5. Close the overlay and verify we are back in the list
+        composeTestRule.onNodeWithText("Close").performClick()
+        composeTestRule.onNodeWithText("Close").assertDoesNotExist()
+        composeTestRule.onNodeWithText("Favourite Facts").assertIsDisplayed()
+    }
+
+    @Test
     fun reminderDialog_displaysOptions() {
         // Open burger menu
         composeTestRule.onNodeWithContentDescription("Menu").performClick()

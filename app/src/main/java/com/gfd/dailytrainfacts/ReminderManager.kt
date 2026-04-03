@@ -13,7 +13,13 @@ object ReminderManager {
     private const val KEY_MINUTE = "reminder_minute"
     private const val WORK_TAG = "daily_train_fact_reminder"
 
-    fun setReminder(context: Context, enabled: Boolean, hour: Int, minute: Int) {
+    fun setReminder(
+        context: Context, 
+        enabled: Boolean, 
+        hour: Int, 
+        minute: Int,
+        workManager: WorkManager = WorkManager.getInstance(context)
+    ) {
         val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
         prefs.edit {
             putBoolean(KEY_ENABLED, enabled)
@@ -22,9 +28,9 @@ object ReminderManager {
         }
 
         if (enabled) {
-            scheduleWork(context, hour, minute)
+            scheduleWork(hour, minute, workManager)
         } else {
-            cancelWork(context)
+            cancelWork(workManager)
         }
     }
 
@@ -38,16 +44,14 @@ object ReminderManager {
         return Pair(prefs.getInt(KEY_HOUR, 9), prefs.getInt(KEY_MINUTE, 0))
     }
 
-    fun rescheduleReminder(context: Context) {
+    fun rescheduleReminder(context: Context, workManager: WorkManager = WorkManager.getInstance(context)) {
         if (isReminderEnabled(context)) {
             val (hour, minute) = getReminderTime(context)
-            scheduleWork(context, hour, minute)
+            scheduleWork(hour, minute, workManager)
         }
     }
 
-    private fun scheduleWork(context: Context, hour: Int, minute: Int) {
-        val workManager = WorkManager.getInstance(context)
-        
+    private fun scheduleWork(hour: Int, minute: Int, workManager: WorkManager) {
         val initialDelay = calculateNextOccurrence(System.currentTimeMillis(), hour, minute) - System.currentTimeMillis()
         
         val workRequest = OneTimeWorkRequestBuilder<ReminderWorker>()
@@ -77,7 +81,7 @@ object ReminderManager {
         return calendar.timeInMillis
     }
 
-    private fun cancelWork(context: Context) {
-        WorkManager.getInstance(context).cancelAllWorkByTag(WORK_TAG)
+    private fun cancelWork(workManager: WorkManager) {
+        workManager.cancelAllWorkByTag(WORK_TAG)
     }
 }

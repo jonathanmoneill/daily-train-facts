@@ -9,6 +9,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.work.WorkManager
 import com.gfd.dailytrainfacts.data.Fact
 import com.gfd.dailytrainfacts.data.FactRepository
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -16,7 +17,10 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
-class TrainFactsViewModel(private val repository: FactRepository) : ViewModel() {
+class TrainFactsViewModel(
+    private val repository: FactRepository,
+    private val workManager: WorkManager? = null
+) : ViewModel() {
     private val _currentScreen = mutableStateOf(Screen.Home)
     val currentScreen: State<Screen> = _currentScreen
 
@@ -34,6 +38,9 @@ class TrainFactsViewModel(private val repository: FactRepository) : ViewModel() 
 
     private val _favouriteFacts = MutableStateFlow<List<Fact>>(emptyList())
     val favouriteFacts: StateFlow<List<Fact>> = _favouriteFacts.asStateFlow()
+    
+    private val _selectedFavouriteFact = mutableStateOf<Fact?>(null)
+    val selectedFavouriteFact: State<Fact?> = _selectedFavouriteFact
 
     fun navigateTo(screen: Screen) {
         _currentScreen.value = screen
@@ -62,19 +69,30 @@ class TrainFactsViewModel(private val repository: FactRepository) : ViewModel() 
             repository.toggleFavourite(fact.text)
             // Reload current fact to update its favourite status in UI
             _currentFact.value = repository.getFactByText(fact.text)
+            
+            // If the selected favourite fact was toggled, update it too
+            if (_selectedFavouriteFact.value?.text == fact.text) {
+                _selectedFavouriteFact.value = repository.getFactByText(fact.text)
+            }
         }
+    }
+
+    fun selectFavouriteFact(fact: Fact?) {
+        _selectedFavouriteFact.value = fact
     }
 
     fun toggleReminder(context: Context, enabled: Boolean) {
         val (hour, minute) = _reminderTime.value
-        ReminderManager.setReminder(context, enabled, hour, minute)
+        val wm = workManager ?: WorkManager.getInstance(context)
+        ReminderManager.setReminder(context, enabled, hour, minute, wm)
         _isReminderEnabled.value = enabled
     }
 
     fun updateReminderTime(context: Context, hour: Int, minute: Int) {
         _reminderTime.value = Pair(hour, minute)
         if (_isReminderEnabled.value) {
-            ReminderManager.setReminder(context, true, hour, minute)
+            val wm = workManager ?: WorkManager.getInstance(context)
+            ReminderManager.setReminder(context, true, hour, minute, wm)
         }
     }
 

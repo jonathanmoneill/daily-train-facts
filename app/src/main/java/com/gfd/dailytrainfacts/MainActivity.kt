@@ -1,6 +1,5 @@
 package com.gfd.dailytrainfacts
 
-import android.Manifest
 import android.content.Intent
 import android.os.Build
 import android.os.Bundle
@@ -243,7 +242,9 @@ fun HomeScreen(
         }
 
         if (showFactOverlay) {
+            val currentFact by viewModel.currentFact.collectAsState()
             FactOverlay(
+                fact = currentFact,
                 onCloseClicked = onCloseFactOverlay,
                 viewModel = viewModel
             )
@@ -260,41 +261,42 @@ fun HomeScreen(
 
 @Composable
 fun FactOverlay(
+    fact: Fact?,
     onCloseClicked: () -> Unit, 
     viewModel: TrainFactsViewModel
 ) {
-    val calendar = Calendar.getInstance()
-    val dateFormat = SimpleDateFormat("EEEE, MMMM d, yyyy", Locale.getDefault())
-    val currentDate = dateFormat.format(calendar.time)
-    
-    val currentFact by viewModel.currentFact.collectAsState()
-    
     val context = LocalContext.current
     val haptic = LocalHapticFeedback.current
     
+    val calendar = Calendar.getInstance()
+    val dateFormat = SimpleDateFormat("EEEE, MMMM d, yyyy", Locale.getDefault())
+    val currentDate = dateFormat.format(calendar.time)
+
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color.Black.copy(alpha = 0.7f))
-            .clickable(onClick = onCloseClicked)
+            .background(Color.Black.copy(alpha = 0.75f))
+            .clickable(onClick = onCloseClicked),
+        contentAlignment = Alignment.Center
     ) {
         Card(
             modifier = Modifier
-                .align(Alignment.Center)
                 .padding(24.dp)
-                .fillMaxWidth()
-                .heightIn(min = 250.dp, max = 650.dp)
-                .clickable(enabled = false) {}, // Prevent clicks on card from dismissing overlay
-            shape = RoundedCornerShape(16.dp),
-            elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
+                .widthIn(max = 480.dp)
+                .fillMaxWidth(0.9f)
+                .wrapContentHeight()
+                .animateContentSize()
+                .clickable(enabled = false) {}, 
+            shape = RoundedCornerShape(24.dp),
+            elevation = CardDefaults.cardElevation(defaultElevation = 12.dp),
             colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.8f)
+                containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.98f)
             )
         ) {
             Column(
                 modifier = Modifier
                     .padding(24.dp)
-                    .fillMaxSize(),
+                    .wrapContentHeight(),
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
@@ -303,9 +305,8 @@ fun FactOverlay(
                     painter = painterResource(id = R.drawable.train_silhouette),
                     contentDescription = "Train Illustration",
                     modifier = Modifier
-                        .fillMaxWidth()
-                        .height(100.dp)
-                        .padding(bottom = 8.dp),
+                        .height(70.dp)
+                        .fillMaxWidth(),
                     contentScale = ContentScale.Fit
                 )
 
@@ -316,26 +317,24 @@ fun FactOverlay(
                     fontWeight = FontWeight.Bold
                 )
 
-                // Scrollable fact area that expands to fill available space
-                Box(
+                // Fact area - wraps height naturally, scrollable only if it exceeds max limit
+                Column(
                     modifier = Modifier
-                        .weight(1f)
-                        .fillMaxWidth(),
-                    contentAlignment = Alignment.Center
+                        .fillMaxWidth()
+                        .heightIn(max = 350.dp) 
+                        .verticalScroll(rememberScrollState())
+                        .padding(vertical = 4.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center
                 ) {
-                    Column(
-                        modifier = Modifier.verticalScroll(rememberScrollState()),
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        SelectionContainer {
-                            Text(
-                                text = currentFact?.text ?: "Loading today's train fact...",
-                                style = MaterialTheme.typography.headlineSmall,
-                                textAlign = TextAlign.Center,
-                                lineHeight = 34.sp,
-                                modifier = Modifier.padding(horizontal = 8.dp)
-                            )
-                        }
+                    SelectionContainer {
+                        Text(
+                            text = fact?.text ?: "Loading today's train fact...",
+                            style = MaterialTheme.typography.headlineSmall,
+                            textAlign = TextAlign.Center,
+                            lineHeight = 34.sp,
+                            modifier = Modifier.padding(horizontal = 4.dp)
+                        )
                     }
                 }
 
@@ -344,16 +343,16 @@ fun FactOverlay(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    val isFavourite = currentFact?.isFavourite ?: false
+                    val isFavourite = fact?.isFavourite ?: false
                     FilledTonalButton(
                         onClick = {
                             haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                            currentFact?.let { viewModel.toggleFavourite(it) }
+                            fact?.let { viewModel.toggleFavourite(it) }
                         },
                         modifier = Modifier.weight(1f),
-                        shape = RoundedCornerShape(8.dp),
+                        shape = RoundedCornerShape(12.dp),
                         contentPadding = PaddingValues(horizontal = 4.dp),
-                        enabled = currentFact != null
+                        enabled = fact != null
                     ) {
                         Text(if (isFavourite) "Favourite" else "Add to Favourites", fontSize = 11.sp)
                         Spacer(Modifier.width(4.dp))
@@ -368,7 +367,7 @@ fun FactOverlay(
                     FilledTonalButton(
                         onClick = {
                             haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                            currentFact?.let {
+                            fact?.let {
                                 val sendIntent: Intent = Intent().apply {
                                     action = Intent.ACTION_SEND
                                     putExtra(Intent.EXTRA_TEXT, "Did you know? ${it.text} #DailyTrainFacts")
@@ -379,9 +378,9 @@ fun FactOverlay(
                             }
                         },
                         modifier = Modifier.weight(1f),
-                        shape = RoundedCornerShape(8.dp),
+                        shape = RoundedCornerShape(12.dp),
                         contentPadding = PaddingValues(horizontal = 4.dp),
-                        enabled = currentFact != null
+                        enabled = fact != null
                     ) {
                         Icon(
                             imageVector = Icons.Default.Share,
@@ -400,10 +399,10 @@ fun FactOverlay(
                     },
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(50.dp),
-                    shape = RoundedCornerShape(8.dp)
+                        .height(52.dp),
+                    shape = RoundedCornerShape(12.dp)
                 ) {
-                    Text(text = "Close", fontSize = 16.sp)
+                    Text(text = "Close", fontSize = 16.sp, fontWeight = FontWeight.Bold)
                 }
             }
         }
@@ -475,8 +474,8 @@ fun ReminderOptionsDialog(onDismiss: () -> Unit, viewModel: TrainFactsViewModel)
                         onCheckedChange = { checked ->
                             haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                             if (checked) {
-                                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU && !isPermissionGranted) {
-                                    permissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+                                if (Build.VERSION.SDK_INT >= 33 && !isPermissionGranted) {
+                                    permissionLauncher.launch("android.permission.POST_NOTIFICATIONS")
                                 } else {
                                     viewModel.toggleReminder(context, true)
                                 }
@@ -517,70 +516,86 @@ fun FavouritesScreen(onBackClicked: () -> Unit, viewModel: TrainFactsViewModel) 
     val haptic = LocalHapticFeedback.current
     val context = LocalContext.current
     val favourites by viewModel.favouriteFacts.collectAsState()
+    val selectedFact by viewModel.selectedFavouriteFact
     
     val (factToRemove, setFactToRemove) = remember { mutableStateOf<Fact?>(null) }
 
-    Scaffold(
-        topBar = {
-            CenterAlignedTopAppBar(
-                title = { Text("Favourite Facts", fontWeight = FontWeight.Bold) },
-                navigationIcon = {
-                    IconButton(onClick = {
-                        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                        onBackClicked()
-                    }) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+    Box(modifier = Modifier.fillMaxSize()) {
+        Scaffold(
+            topBar = {
+                CenterAlignedTopAppBar(
+                    title = { Text("Favourite Facts", fontWeight = FontWeight.Bold) },
+                    navigationIcon = {
+                        IconButton(onClick = {
+                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                            onBackClicked()
+                        }) {
+                            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                        }
                     }
-                }
-            )
-        }
-    ) { padding ->
-        if (favourites.isEmpty()) {
-            Box(modifier = Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.Center) {
-                Text("No favourites yet.", style = MaterialTheme.typography.bodyLarge, color = Color.Gray)
+                )
             }
-        } else {
-            LazyColumn(
-                modifier = Modifier.fillMaxSize().padding(padding),
-                contentPadding = PaddingValues(16.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                items(favourites) { fact ->
-                    Card(
-                        modifier = Modifier.fillMaxWidth(),
-                        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-                    ) {
-                        Row(
-                            modifier = Modifier.padding(16.dp),
-                            verticalAlignment = Alignment.CenterVertically
+        ) { padding ->
+            if (favourites.isEmpty()) {
+                Box(modifier = Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.Center) {
+                    Text("No favourites yet.", style = MaterialTheme.typography.bodyLarge, color = Color.Gray)
+                }
+            } else {
+                LazyColumn(
+                    modifier = Modifier.fillMaxSize().padding(padding),
+                    contentPadding = PaddingValues(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    items(favourites) { fact ->
+                        Card(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable {
+                                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                    viewModel.selectFavouriteFact(fact)
+                                },
+                            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
                         ) {
-                            Text(
-                                text = fact.text,
-                                style = MaterialTheme.typography.bodyLarge,
-                                modifier = Modifier.weight(1f)
-                            )
-                            IconButton(onClick = {
-                                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                                val sendIntent: Intent = Intent().apply {
-                                    action = Intent.ACTION_SEND
-                                    putExtra(Intent.EXTRA_TEXT, "Did you know? ${fact.text} #DailyTrainFacts")
-                                    type = "text/plain"
+                            Row(
+                                modifier = Modifier.padding(16.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(
+                                    text = fact.text,
+                                    style = MaterialTheme.typography.bodyLarge,
+                                    modifier = Modifier.weight(1f)
+                                )
+                                IconButton(onClick = {
+                                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                    val sendIntent: Intent = Intent().apply {
+                                        action = Intent.ACTION_SEND
+                                        putExtra(Intent.EXTRA_TEXT, "Did you know? ${fact.text} #DailyTrainFacts")
+                                        type = "text/plain"
+                                    }
+                                    val shareIntent = Intent.createChooser(sendIntent, null)
+                                    context.startActivity(shareIntent)
+                                }) {
+                                    Icon(Icons.Default.Share, contentDescription = "Share fact")
                                 }
-                                val shareIntent = Intent.createChooser(sendIntent, null)
-                                context.startActivity(shareIntent)
-                            }) {
-                                Icon(Icons.Default.Share, contentDescription = "Share fact")
-                            }
-                            IconButton(onClick = {
-                                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                                setFactToRemove(fact)
-                            }) {
-                                Icon(Icons.Default.Favorite, contentDescription = "Remove from favourites", tint = Color.Red)
+                                IconButton(onClick = {
+                                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                    setFactToRemove(fact)
+                                }) {
+                                    Icon(Icons.Default.Favorite, contentDescription = "Remove from favourites", tint = Color.Red)
+                                }
                             }
                         }
                     }
                 }
             }
+        }
+
+        if (selectedFact != null) {
+            FactOverlay(
+                fact = selectedFact,
+                onCloseClicked = { viewModel.selectFavouriteFact(null) },
+                viewModel = viewModel
+            )
         }
     }
 

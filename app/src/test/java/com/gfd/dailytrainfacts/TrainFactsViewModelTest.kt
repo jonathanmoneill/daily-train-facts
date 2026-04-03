@@ -2,6 +2,9 @@ package com.gfd.dailytrainfacts
 
 import android.content.Context
 import android.content.SharedPreferences
+import androidx.work.ExistingWorkPolicy
+import androidx.work.OneTimeWorkRequest
+import androidx.work.WorkManager
 import com.gfd.dailytrainfacts.data.Fact
 import com.gfd.dailytrainfacts.data.FactRepository
 import kotlinx.coroutines.Dispatchers
@@ -10,6 +13,7 @@ import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.*
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
 import org.junit.Before
 import org.junit.Test
 import org.mockito.kotlin.*
@@ -20,6 +24,8 @@ class TrainFactsViewModelTest {
     private val repository: FactRepository = mock()
     private val context: Context = mock()
     private val sharedPrefs: SharedPreferences = mock()
+    private val sharedPrefsEditor: SharedPreferences.Editor = mock()
+    private val workManager: WorkManager = mock()
     private lateinit var viewModel: TrainFactsViewModel
     private val testDispatcher = StandardTestDispatcher()
 
@@ -28,14 +34,19 @@ class TrainFactsViewModelTest {
         Dispatchers.setMain(testDispatcher)
 
         // Mock SharedPreferences to prevent NPE during init
-        whenever(context.getSharedPreferences(any(), any())).thenReturn(sharedPrefs)
-        whenever(sharedPrefs.getBoolean(any(), any())).thenReturn(false)
-        whenever(sharedPrefs.getInt(any(), any())).thenReturn(0)
+        whenever(context.getSharedPreferences(any<String>(), any<Int>())).thenReturn(sharedPrefs)
+        whenever(sharedPrefs.edit()).thenReturn(sharedPrefsEditor)
+        whenever(sharedPrefsEditor.putBoolean(any<String>(), any<Boolean>())).thenReturn(sharedPrefsEditor)
+        whenever(sharedPrefsEditor.putInt(any<String>(), any<Int>())).thenReturn(sharedPrefsEditor)
+        whenever(sharedPrefsEditor.putString(any<String>(), anyOrNull<String>())).thenReturn(sharedPrefsEditor)
+
+        whenever(sharedPrefs.getBoolean(any<String>(), any<Boolean>())).thenReturn(false)
+        whenever(sharedPrefs.getInt(any<String>(), any<Int>())).thenReturn(0)
 
         val initialFlow = flowOf(emptyList<Fact>())
         whenever(repository.getFavouriteFacts()).thenReturn(initialFlow)
         
-        viewModel = TrainFactsViewModel(repository)
+        viewModel = TrainFactsViewModel(repository, workManager)
     }
 
     @After
@@ -94,14 +105,42 @@ class TrainFactsViewModelTest {
     }
 
     @Test
+    fun toggleFavourite_updatesSelectedFavouriteFact() = runTest {
+        val fact = Fact(id = 1, text = "Test Fact", isFavourite = true)
+        val updatedFact = fact.copy(isFavourite = false)
+        
+        whenever(repository.getFactByText(fact.text)).thenReturn(updatedFact)
+        
+        viewModel.selectFavouriteFact(fact)
+        assertEquals(fact, viewModel.selectedFavouriteFact.value)
+
+        viewModel.toggleFavourite(fact)
+        advanceUntilIdle()
+
+        assertEquals(updatedFact, viewModel.selectedFavouriteFact.value)
+    }
+
+    @Test
+    fun selectFavouriteFact_updatesState() {
+        val fact = Fact(text = "Test Fact")
+        assertNull(viewModel.selectedFavouriteFact.value)
+        
+        viewModel.selectFavouriteFact(fact)
+        assertEquals(fact, viewModel.selectedFavouriteFact.value)
+        
+        viewModel.selectFavouriteFact(null)
+        assertNull(viewModel.selectedFavouriteFact.value)
+    }
+
+    @Test
     fun toggleReminder_updatesState() {
-        // Use a real context/mock behavior if ReminderManager is more complex
-        // Here we just check the ViewModel state update
         viewModel.toggleReminder(context, true)
         assertEquals(true, viewModel.isReminderEnabled.value)
+        verify(workManager).enqueueUniqueWork(any<String>(), any<ExistingWorkPolicy>(), any<OneTimeWorkRequest>())
         
         viewModel.toggleReminder(context, false)
         assertEquals(false, viewModel.isReminderEnabled.value)
+        verify(workManager).cancelAllWorkByTag(any<String>())
     }
 
     @Test
@@ -110,5 +149,6 @@ class TrainFactsViewModelTest {
         viewModel.updateReminderTime(context, 10, 30)
         
         assertEquals(Pair(10, 30), viewModel.reminderTime.value)
+        verify(workManager, times(2)).enqueueUniqueWork(any<String>(), any<ExistingWorkPolicy>(), any<OneTimeWorkRequest>())
     }
 }
