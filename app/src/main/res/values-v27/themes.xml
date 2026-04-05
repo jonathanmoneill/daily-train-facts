@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <style name="Theme.DailyTrainFacts" parent="Theme.Material3.DayNight.NoActionBar">
-        <!-- Base theme without deprecated window attributes -->
+        <!-- Android 15 Edge-to-Edge compliance -->
+        <item name="android:windowLayoutInDisplayCutoutMode">always</item>
     </style>
 </resources>

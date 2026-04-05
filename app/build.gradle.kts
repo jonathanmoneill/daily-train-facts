@@ -12,8 +12,8 @@ android {
         applicationId = "com.gfd.dailytrainfacts"
         minSdk = 24
         targetSdk = 36
-        versionCode = 5
-        versionName = "2.2"
+        versionCode = 6
+        versionName = "2.3"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -57,6 +57,9 @@ dependencies {
     implementation(libs.androidx.compose.material3)
     implementation(libs.androidx.compose.material.icons.extended)
     implementation(libs.androidx.compose.ui.text.google.fonts)
+    
+    // Material Components for Android
+    implementation(libs.material)
     
     // Glance for App Widgets
     implementation(libs.androidx.glance.appwidget)
