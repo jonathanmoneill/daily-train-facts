@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "498309709607",
+    "project_id": "daily-train-facts",
+    "storage_bucket": "daily-train-facts.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:498309709607:android:779b7ba6df3105ad53f302",
+        "android_client_info": {
+          "package_name": "com.gfd.dailytrainfacts"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBwWe8gp9dAbdV9MaWAVROWWUhxGR9qtsQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
