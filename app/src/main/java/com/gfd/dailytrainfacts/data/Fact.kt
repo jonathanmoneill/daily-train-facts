@@ -1,9 +1,13 @@
 package com.gfd.dailytrainfacts.data
 
 import androidx.room.Entity
+import androidx.room.Index
 import androidx.room.PrimaryKey
 
-@Entity(tableName = "facts")
+@Entity(
+    tableName = "facts",
+    indices = [Index(value = ["text"], unique = true)]
+)
 data class Fact(
     @PrimaryKey(autoGenerate = true)
     val id: Int = 0,

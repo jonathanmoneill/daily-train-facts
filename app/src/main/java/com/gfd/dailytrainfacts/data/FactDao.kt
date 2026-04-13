@@ -6,7 +6,7 @@ import kotlinx.coroutines.flow.Flow
 @Dao
 interface FactDao {
     @Query("SELECT * FROM facts")
-    fun getAllFacts(): Flow<List<Fact>>
+    suspend fun getAllFactsOnce(): List<Fact>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertFacts(facts: List<Fact>)
@@ -20,6 +20,9 @@ interface FactDao {
     @Update
     suspend fun updateFact(fact: Fact)
 
+    @Delete
+    suspend fun deleteFacts(facts: List<Fact>)
+
     @Query("SELECT * FROM facts WHERE isFavourite = 1")
     fun getFavouriteFacts(): Flow<List<Fact>>
 
@@ -31,4 +34,17 @@ interface FactDao {
 
     @Query("UPDATE facts SET isShown = 0")
     suspend fun resetShownStatus()
+
+    @Transaction
+    suspend fun syncFacts(
+        newFacts: List<Fact>,
+        obsoleteFacts: List<Fact>
+    ) {
+        if (newFacts.isNotEmpty()) {
+            insertFacts(newFacts)
+        }
+        if (obsoleteFacts.isNotEmpty()) {
+            deleteFacts(obsoleteFacts)
+        }
+    }
 }

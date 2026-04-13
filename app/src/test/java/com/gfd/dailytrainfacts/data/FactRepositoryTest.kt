@@ -15,23 +15,28 @@ class FactRepositoryTest {
     private val repository = FactRepository(factDao)
 
     @Test
-    fun initializeDatabaseIfNeeded_insertsFactsWhenEmpty() = runTest {
-        whenever(factDao.getFactCount()).thenReturn(0)
+    fun initializeDatabaseIfNeeded_syncsNewFactsAndRemovesObsolete() = runTest {
+        // Mock current DB state: 1 existing fact, 1 obsolete fact
+        val existingFact = Fact(text = TrainFactsProvider.facts[0])
+        val obsoleteFact = Fact(text = "Old Obsolete Fact", isFavourite = false)
+        val favouriteObsoleteFact = Fact(text = "Favourited Obsolete Fact", isFavourite = true)
+        
+        whenever(factDao.getAllFactsOnce()).thenReturn(listOf(existingFact, obsoleteFact, favouriteObsoleteFact))
 
         repository.initializeDatabaseIfNeeded()
 
-        verify(factDao).getFactCount()
-        verify(factDao).insertFacts(argThat { size == TrainFactsProvider.facts.size })
-    }
-
-    @Test
-    fun initializeDatabaseIfNeeded_doesNotInsertWhenNotEmpty() = runTest {
-        whenever(factDao.getFactCount()).thenReturn(100)
-
-        repository.initializeDatabaseIfNeeded()
-
-        verify(factDao).getFactCount()
-        verify(factDao, never()).insertFacts(any())
+        // Verify sync call
+        verify(factDao).syncFacts(
+            newFacts = argThat { 
+                // Should contain all provider facts except the one that's already in DB
+                size == TrainFactsProvider.facts.size - 1 && 
+                none { it.text == existingFact.text }
+            },
+            obsoleteFacts = argThat {
+                // Should only contain the non-favourite obsolete fact
+                size == 1 && first().text == "Old Obsolete Fact"
+            }
+        )
     }
 
     @Test

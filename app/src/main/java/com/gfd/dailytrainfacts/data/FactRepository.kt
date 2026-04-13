@@ -23,12 +23,27 @@ class FactRepository(private val factDao: FactDao) {
 
     suspend fun initializeDatabaseIfNeeded() {
         withContext(Dispatchers.IO) {
-            val count = factDao.getFactCount()
-            if (count == 0) {
-                // Initial insertion of facts from Provider
-                val factsToInsert = TrainFactsProvider.facts.map { Fact(text = it) }
-                factDao.insertFacts(factsToInsert)
+            val existingFacts = factDao.getAllFactsOnce()
+            val existingTexts = existingFacts.map { it.text }.toSet()
+            
+            val providerFacts = TrainFactsProvider.facts.toSet()
+            
+            // Add new facts from provider
+            val newFacts = providerFacts
+                .filter { it !in existingTexts }
+                .map { Fact(text = it) }
+            
+            if (newFacts.isNotEmpty()) {
+                factDao.insertFacts(newFacts)
             }
+
+            // Remove facts that are no longer in the provider,
+            // but ONLY if they haven't been favourited by the user.
+            val obsoleteFacts = existingFacts.filter { 
+                it.text !in providerFacts && !it.isFavourite 
+            }
+            
+            factDao.syncFacts(newFacts, obsoleteFacts)
         }
     }
 
